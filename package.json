@@ -1,0 +1,22 @@
+{
+  "name": "atvi-atlantis",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/teste/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/teste/index.js",
+    "check": "npm run build && npm run start",
+    "test": "npm run check"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^17.0.21",
+    "@types/prompt-sync": "^4.1.1",
+    "prompt-sync": "^4.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
