@@ -1,121 +1,71 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
 import './App.css'
 
+type Cliente = {
+  id: number
+  nome: string
+  nomeSocial: string
+  ehDependente: boolean
+}
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [carregando, setCarregando] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
+
+  async function listarClientes() {
+    setCarregando(true)
+    setErro(null)
+
+    try {
+      const resposta = await fetch('http://localhost:3333/clientes')
+      if (!resposta.ok) {
+        throw new Error(`Falha ao buscar clientes (status ${resposta.status})`)
+      }
+
+      const dados = (await resposta.json()) as Cliente[]
+      setClientes(dados)
+    } catch (err) {
+      const mensagem = err instanceof Error ? err.message : 'Erro inesperado ao buscar clientes'
+      setErro(mensagem)
+      setClientes([])
+    } finally {
+      setCarregando(false)
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <main className="container">
+      <h1>Atlantis SPA - Teste de conexao</h1>
 
-      <div className="ticks"></div>
+      <p className="subtitulo">
+        Clique no botao para consumir o endpoint do backend e listar todos os clientes.
+      </p>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
+      <button type="button" onClick={listarClientes} disabled={carregando}>
+        {carregando ? 'Carregando...' : 'Listar clientes'}
+      </button>
+
+      {erro && <p className="erro">{erro}</p>}
+
+      <section className="lista-clientes">
+        <h2>Clientes encontrados: {clientes.length}</h2>
+
+        {clientes.length === 0 ? (
+          <p className="vazio">Nenhum cliente carregado ainda.</p>
+        ) : (
           <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
+            {clientes.map((cliente) => (
+              <li key={cliente.id}>
+                <strong>{cliente.nome}</strong>
+                <span>Nome social: {cliente.nomeSocial || '-'}</span>
+                <span>Tipo: {cliente.ehDependente ? 'Dependente' : 'Titular'}</span>
+              </li>
+            ))}
           </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
+        )}
       </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    </main>
   )
 }
 

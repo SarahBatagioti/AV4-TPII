@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/teste/index.js",
+    "start:api": "npm run build && node dist/api/server.js",
     "check": "npm run build && npm run start",
     "test": "npm run check"
   },
