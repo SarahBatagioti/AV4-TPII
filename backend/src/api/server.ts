@@ -3,6 +3,7 @@ import { carregarDadosIniciais } from "../dados/dadosIniciais"
 import Armazem from "../armazenamento/armazem"
 import Cliente from "../modelos/cliente"
 import Acomodacao from "../modelos/acomodacao"
+import { NomeAcomodacao } from "../enumeracoes/nomeAcomodacao"
 import Documento from "../modelos/documento"
 import Endereco from "../modelos/endereco"
 import Telefone from "../modelos/telefone"
@@ -69,6 +70,15 @@ type ClientePayload = {
 type AcomodacaoDTO = {
     id: number
     nome: string
+    camaSolteiro: number
+    camaCasal: number
+    suite: number
+    climatizacao: boolean
+    garagem: number
+}
+
+type AcomodacaoPayload = {
+    nome: NomeAcomodacao
     camaSolteiro: number
     camaCasal: number
     suite: number
@@ -164,6 +174,30 @@ function acomodacaoParaDTO(acomodacao: Acomodacao, indice: number): AcomodacaoDT
         climatizacao: acomodacao.Climatizacao,
         garagem: acomodacao.Garagem
     }
+}
+
+function acomodacaoPayloadValido(payload: AcomodacaoPayload): boolean {
+    return typeof payload.nome === "string"
+        && typeof payload.camaSolteiro === "number"
+        && typeof payload.camaCasal === "number"
+        && typeof payload.suite === "number"
+        && typeof payload.climatizacao === "boolean"
+        && typeof payload.garagem === "number"
+        && payload.camaSolteiro >= 0
+        && payload.camaCasal >= 0
+        && payload.suite >= 0
+        && payload.garagem >= 0
+}
+
+function nomeAcomodacaoEhValido(nome: string): nome is NomeAcomodacao {
+    return [
+        "Casal Simples",
+        "Familia Simples",
+        "Familia Mais",
+        "Familia Super",
+        "Solteiro Simples",
+        "Solteiro Mais"
+    ].includes(nome)
 }
 
 function hospedagemParaDTO(hospedagem: Hospedagem, indice: number): HospedagemDTO {
@@ -304,6 +338,34 @@ async function processarRequisicao(requisicao: IncomingMessage, resposta: Server
         const acomodacoes = Armazem.obterInstancia().obterAcomodacoes().map(acomodacaoParaDTO)
         responderJSON(resposta, 200, acomodacoes)
         return
+    }
+
+    if (metodo === "POST" && segmentos.length === 1 && segmentos[0] === "acomodacoes") {
+        try {
+            const payload = await lerCorpoJSON<AcomodacaoPayload>(requisicao)
+
+            if (!acomodacaoPayloadValido(payload) || !nomeAcomodacaoEhValido(payload.nome)) {
+                responderJSON(resposta, 400, { mensagem: "Informe dados válidos para a acomodação." })
+                return
+            }
+
+            const acomodacao = new Acomodacao(
+                payload.nome,
+                payload.camaSolteiro,
+                payload.camaCasal,
+                payload.suite,
+                payload.climatizacao,
+                payload.garagem
+            )
+
+            const armazem = Armazem.obterInstancia()
+            armazem.cadastrarAcomodacao(acomodacao)
+            responderJSON(resposta, 201, acomodacaoParaDTO(acomodacao, armazem.obterAcomodacoes().length - 1))
+            return
+        } catch {
+            responderJSON(resposta, 400, { mensagem: "Nao foi possivel processar o corpo da requisicao." })
+            return
+        }
     }
 
     if (metodo === "GET" && segmentos.length === 1 && segmentos[0] === "hospedagens") {

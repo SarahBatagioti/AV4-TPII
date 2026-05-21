@@ -152,6 +152,7 @@ export function HospedagensPage() {
           renderActions={() => <span className="cell-muted">—</span>}
           emptyTitle="Nenhuma hospedagem ativa"
           emptyDescription="Use o botão Cadastrar Hospedagem para registrar a primeira hospedagem ativa."
+          itemLabel="hospedagens"
         />
       ) : null}
 

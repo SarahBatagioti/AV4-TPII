@@ -238,6 +238,7 @@ export function ClientesPage() {
           )}
           emptyTitle="Nenhum cliente cadastrado"
           emptyDescription="Use o botão Cadastrar Cliente para criar o primeiro registro e iniciar a gestão da base."
+          itemLabel="clientes"
         />
       ) : null}
 

@@ -16,6 +16,7 @@ type PaginatedTableProps<T> = {
   renderActions: (item: T) => ReactNode
   emptyTitle: string
   emptyDescription: string
+  itemLabel: string
 }
 
 export function PaginatedTable<T>({
@@ -28,6 +29,7 @@ export function PaginatedTable<T>({
   renderActions,
   emptyTitle,
   emptyDescription,
+  itemLabel,
 }: PaginatedTableProps<T>) {
   const totalPages = Math.max(1, Math.ceil(items.length / pageSize))
   const currentPage = Math.min(page, totalPages)
@@ -76,7 +78,7 @@ export function PaginatedTable<T>({
         <div className="pagination-info">
           {items.length === 0
             ? 'Nenhum registro disponível.'
-            : `Mostrando ${startRecord}-${endRecord} de ${items.length} clientes`}
+            : `Mostrando ${startRecord}-${endRecord} de ${items.length} ${itemLabel}`}
         </div>
 
         <div className="pagination-controls">

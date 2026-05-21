@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 import { Header } from './components/layout/Header'
+import { AcomodacoesPage } from './features/acomodacoes/AcomodacoesPage'
 import { ClientesPage } from './features/clientes/ClientesPage'
 import { HospedagensPage } from './features/hospedagens/HospedagensPage'
 
@@ -19,13 +20,7 @@ function App() {
         ) : activeSection === 'hospedagem' ? (
           <HospedagensPage />
         ) : (
-          <section className="hero-card hero-card--placeholder">
-            <span className="eyebrow">Atlantis</span>
-            <h1>Acomodações</h1>
-            <p>
-              Esta área pode receber a mesma arquitetura reutilizável aplicada em Clientes quando a tela for integrada.
-            </p>
-          </section>
+          <AcomodacoesPage />
         )}
       </main>
     </div>
