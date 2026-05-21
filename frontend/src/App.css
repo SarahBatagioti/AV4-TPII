@@ -582,6 +582,29 @@
   font-size: 13px;
 }
 
+.selection-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.selection-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(43, 124, 168, 0.12);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.selection-item__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .alert-box {
   margin-top: 16px;
   border-radius: 16px;

@@ -2,11 +2,13 @@ import { createServer, IncomingMessage, ServerResponse } from "http"
 import { carregarDadosIniciais } from "../dados/dadosIniciais"
 import Armazem from "../armazenamento/armazem"
 import Cliente from "../modelos/cliente"
+import Acomodacao from "../modelos/acomodacao"
 import Documento from "../modelos/documento"
 import Endereco from "../modelos/endereco"
 import Telefone from "../modelos/telefone"
+import Hospedagem from "../modelos/hospedagem"
 
-const PORTA = 3333
+const PORTA = Number(process.env.PORT ?? 3333)
 
 type ClienteTipo = "titular" | "dependente"
 
@@ -64,6 +66,27 @@ type ClientePayload = {
     }
 }
 
+type AcomodacaoDTO = {
+    id: number
+    nome: string
+    camaSolteiro: number
+    camaCasal: number
+    suite: number
+    climatizacao: boolean
+    garagem: number
+}
+
+type HospedagemDTO = {
+    id: number
+    acomodacao: AcomodacaoDTO
+    hospedes: ClienteDTO[]
+}
+
+type HospedagemPayload = {
+    acomodacaoId: number
+    hospedesIds: number[]
+}
+
 function adicionarCabecalhosCors(resposta: ServerResponse): void {
     resposta.setHeader("Access-Control-Allow-Origin", "*")
     resposta.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -82,7 +105,7 @@ function responderSemConteudo(resposta: ServerResponse, statusCode: number): voi
     resposta.end()
 }
 
-function lerCorpoJSON(requisicao: IncomingMessage): Promise<ClientePayload> {
+function lerCorpoJSON<T>(requisicao: IncomingMessage): Promise<T> {
     return new Promise((resolve, reject) => {
         let texto = ""
 
@@ -91,7 +114,7 @@ function lerCorpoJSON(requisicao: IncomingMessage): Promise<ClientePayload> {
         })
         requisicao.on("end", () => {
             try {
-                resolve(JSON.parse(texto) as ClientePayload)
+                resolve(JSON.parse(texto) as T)
             } catch (erro) {
                 reject(erro)
             }
@@ -129,6 +152,36 @@ function clienteParaDTO(cliente: Cliente): ClienteDTO {
             codigoPostal: cliente.endereco.codigoPostal
         }
     }
+}
+
+function acomodacaoParaDTO(acomodacao: Acomodacao, indice: number): AcomodacaoDTO {
+    return {
+        id: indice + 1,
+        nome: acomodacao.NomeAcomodacao,
+        camaSolteiro: acomodacao.CamaSolteiro,
+        camaCasal: acomodacao.CamaCasal,
+        suite: acomodacao.Suite,
+        climatizacao: acomodacao.Climatizacao,
+        garagem: acomodacao.Garagem
+    }
+}
+
+function hospedagemParaDTO(hospedagem: Hospedagem, indice: number): HospedagemDTO {
+    const armazem = Armazem.obterInstancia()
+    const acomodacoes = armazem.obterAcomodacoes()
+    const acomodacaoIndice = acomodacoes.indexOf(hospedagem.Acomodacao)
+
+    return {
+        id: indice + 1,
+        acomodacao: acomodacaoParaDTO(hospedagem.Acomodacao, acomodacaoIndice >= 0 ? acomodacaoIndice : 0),
+        hospedes: hospedagem.Hospedes.map(clienteParaDTO)
+    }
+}
+
+function hospedagemPayloadValido(payload: HospedagemPayload): boolean {
+    return Number.isInteger(payload.acomodacaoId) && Array.isArray(payload.hospedesIds) && payload.hospedesIds.length > 0
+        && payload.hospedesIds.every((id) => Number.isInteger(id))
+        && new Set(payload.hospedesIds).size === payload.hospedesIds.length
 }
 
 function converterPayloadParaEndereco(payload: ClientePayload): Endereco {
@@ -247,6 +300,18 @@ async function processarRequisicao(requisicao: IncomingMessage, resposta: Server
         return
     }
 
+    if (metodo === "GET" && segmentos.length === 1 && segmentos[0] === "acomodacoes") {
+        const acomodacoes = Armazem.obterInstancia().obterAcomodacoes().map(acomodacaoParaDTO)
+        responderJSON(resposta, 200, acomodacoes)
+        return
+    }
+
+    if (metodo === "GET" && segmentos.length === 1 && segmentos[0] === "hospedagens") {
+        const hospedagens = Armazem.obterInstancia().obterHospedagensAtuais().map(hospedagemParaDTO)
+        responderJSON(resposta, 200, hospedagens)
+        return
+    }
+
     if (metodo === "GET" && segmentos.length === 2 && segmentos[0] === "clientes" && segmentos[1] === "titulares") {
         const clientes = Armazem.obterInstancia()
             .buscarClientesTitulares()
@@ -257,7 +322,7 @@ async function processarRequisicao(requisicao: IncomingMessage, resposta: Server
 
     if (metodo === "POST" && segmentos.length === 1 && segmentos[0] === "clientes") {
         try {
-            const payload = await lerCorpoJSON(requisicao)
+            const payload = await lerCorpoJSON<ClientePayload>(requisicao)
             const resultado = criarCliente(payload)
             if (resultado.erro || !resultado.cliente) {
                 responderJSON(resposta, 400, { mensagem: resultado.erro ?? "Dados invalidos." })
@@ -290,7 +355,7 @@ async function processarRequisicao(requisicao: IncomingMessage, resposta: Server
 
         if (metodo === "PUT") {
             try {
-                const payload = await lerCorpoJSON(requisicao)
+                const payload = await lerCorpoJSON<ClientePayload>(requisicao)
                 const erroRelacionamento = atualizarRelacionamento(cliente, payload)
 
                 if (erroRelacionamento) {
@@ -319,6 +384,55 @@ async function processarRequisicao(requisicao: IncomingMessage, resposta: Server
         }
     }
 
+    if (metodo === "POST" && segmentos.length === 1 && segmentos[0] === "hospedagens") {
+        try {
+            const payload = await lerCorpoJSON<HospedagemPayload>(requisicao)
+
+            if (!hospedagemPayloadValido(payload)) {
+                responderJSON(resposta, 400, { mensagem: "Informe ao menos um hospede valido para a hospedagem." })
+                return
+            }
+
+            const armazem = Armazem.obterInstancia()
+            const acomodacao = armazem.obterAcomodacoes()[payload.acomodacaoId - 1]
+
+            if (!acomodacao) {
+                responderJSON(resposta, 400, { mensagem: "Acomodacao invalida." })
+                return
+            }
+
+            const hospedagem = new Hospedagem(acomodacao)
+
+            for (const clienteId of payload.hospedesIds) {
+                const cliente = armazem.buscarClientePorId(clienteId)
+
+                if (!cliente) {
+                    responderJSON(resposta, 400, { mensagem: `Cliente ${clienteId} nao encontrado.` })
+                    return
+                }
+
+                if (armazem.clienteEstaHospedado(cliente.id)) {
+                    responderJSON(resposta, 400, { mensagem: `O cliente ${cliente.nome} ja esta vinculado a uma hospedagem ativa.` })
+                    return
+                }
+
+                if (hospedagem.contemHospede(cliente.id)) {
+                    responderJSON(resposta, 400, { mensagem: `O cliente ${cliente.nome} ja foi adicionado nesta hospedagem.` })
+                    return
+                }
+
+                hospedagem.adicionarHospede(cliente)
+            }
+
+            armazem.cadastrarHospedagem(hospedagem)
+            responderJSON(resposta, 201, hospedagemParaDTO(hospedagem, armazem.obterHospedagensAtuais().length - 1))
+            return
+        } catch {
+            responderJSON(resposta, 400, { mensagem: "Nao foi possivel processar o corpo da requisicao." })
+            return
+        }
+    }
+
     responderJSON(resposta, 404, { mensagem: "Rota nao encontrada" })
 }
 
@@ -326,6 +440,15 @@ carregarDadosIniciais()
 
 const servidor = createServer((requisicao: IncomingMessage, resposta: ServerResponse) => {
     void processarRequisicao(requisicao, resposta)
+})
+
+servidor.on("error", (erro: NodeJS.ErrnoException) => {
+    if (erro.code === "EADDRINUSE") {
+        console.error(`A porta ${PORTA} já está em uso. Finalize o processo atual ou inicie a API com outro PORT.`)
+        process.exit(1)
+    }
+
+    throw erro
 })
 
 servidor.listen(PORTA, () => {
