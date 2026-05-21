@@ -1,9 +1,9 @@
 :root {
-  font-family: Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Segoe UI', Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color: #1f2937;
-  background-color: #eef4f7;
+  background-color: #f0f1eb;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -16,7 +16,7 @@
 
 html {
   min-width: 320px;
-  background-color: #eef4f7;
+  background-color: #f0f1eb;
 }
 
 #root {
@@ -29,7 +29,7 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  background-color: #eef4f7;
+  background-color: #f0f1eb;
 }
 
 button,
