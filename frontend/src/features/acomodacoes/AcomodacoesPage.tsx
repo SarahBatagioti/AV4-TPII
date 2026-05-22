@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
 import { PaginatedTable } from '../../components/ui/PaginatedTable'
-import { cadastrarAcomodacao, listarAcomodacoes } from './acomodacaoApi'
+import { excluirAcomodacao, listarAcomodacoes, salvarAcomodacao } from './acomodacaoApi'
 import { AcomodacaoFormModal } from './AcomodacaoFormModal'
 import { formatarNomeAcomodacao, type AcomodacaoDTO } from './types'
 
@@ -39,6 +40,43 @@ function obterValoresUnicos(acomodacoes: AcomodacaoDTO[], campo: keyof Pick<Acom
   return [...new Set(acomodacoes.map((acomodacao) => acomodacao[campo]))].sort((a, b) => a - b)
 }
 
+function EditIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M11.5 1.75a1.77 1.77 0 0 1 2.5 2.5l-1 1-2.5-2.5 1-1Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="m10 3.75-7 7v2.5h2.5l7-7" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function DeleteIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M2.5 4h11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M5.5 4V2.8c0-.44.36-.8.8-.8h3.4c.44 0 .8.36.8.8V4" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="M5.2 4l.56 9.1c.04.55.49.97 1.04.97h2.4c.55 0 1-.42 1.04-.97L10.8 4" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ActionButton({
+  title,
+  danger = false,
+  onClick,
+  children,
+}: {
+  title: string
+  danger?: boolean
+  onClick: () => void
+  children: ReactNode
+}) {
+  return (
+    <button type="button" className={`icon-button${danger ? ' icon-button--danger' : ''}`} title={title} aria-label={title} onClick={onClick}>
+      {children}
+    </button>
+  )
+}
+
 export function AcomodacoesPage() {
   const [acomodacoes, setAcomodacoes] = useState<AcomodacaoDTO[]>([])
   const [carregando, setCarregando] = useState(true)
@@ -50,7 +88,10 @@ export function AcomodacoesPage() {
   const [suiteFiltro, setSuiteFiltro] = useState('todas')
   const [garagemFiltro, setGaragemFiltro] = useState('todas')
   const [climatizacaoFiltro, setClimatizacaoFiltro] = useState('todas')
+  const [acomodacaoEmEdicao, setAcomodacaoEmEdicao] = useState<AcomodacaoDTO | null>(null)
   const [modalCadastroAberto, setModalCadastroAberto] = useState(false)
+  const [acomodacaoParaExcluir, setAcomodacaoParaExcluir] = useState<AcomodacaoDTO | null>(null)
+  const [excluindo, setExcluindo] = useState(false)
 
   async function carregarAcomodacoes() {
     setCarregando(true)
@@ -123,13 +164,38 @@ export function AcomodacoesPage() {
   }, [busca, camaCasalFiltro, camaSolteiroFiltro, climatizacaoFiltro, garagemFiltro, suiteFiltro])
 
   function abrirCadastro() {
+    setAcomodacaoEmEdicao(null)
     setModalCadastroAberto(true)
   }
 
-  async function salvarAcomodacaoNoBackend(payload: Parameters<typeof cadastrarAcomodacao>[0]) {
-    await cadastrarAcomodacao(payload)
+  function abrirEdicao(acomodacao: AcomodacaoDTO) {
+    setAcomodacaoEmEdicao(acomodacao)
+    setModalCadastroAberto(true)
+  }
+
+  async function salvarAcomodacaoNoBackend(id: number | null, payload: Parameters<typeof salvarAcomodacao>[1]) {
+    await salvarAcomodacao(id, payload)
     await carregarAcomodacoes()
     setPagina(1)
+  }
+
+  async function confirmarExclusao() {
+    if (!acomodacaoParaExcluir) {
+      return
+    }
+
+    setExcluindo(true)
+    setErro(null)
+
+    try {
+      await excluirAcomodacao(acomodacaoParaExcluir.id)
+      setAcomodacaoParaExcluir(null)
+      await carregarAcomodacoes()
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : 'Não foi possível excluir a acomodação.')
+    } finally {
+      setExcluindo(false)
+    }
   }
 
   const colunas = useMemo(
@@ -181,7 +247,7 @@ export function AcomodacoesPage() {
           <span className="page-kicker">Acomodações</span>
           <h1 className="page-title">Gestão de Acomodações</h1>
           <p className="page-subtitle">
-            Consulte as acomodações já cadastradas e adicione novas opções pelo formulário da tela.
+            Consulte, cadastre, edite e remova acomodações disponíveis para hospedagem.
           </p>
         </div>
 
@@ -275,6 +341,16 @@ export function AcomodacoesPage() {
             page={pagina}
             pageSize={PAGE_SIZE}
             onPageChange={setPagina}
+            renderActions={(acomodacao) => (
+              <div className="actions-group">
+                <ActionButton title="Editar acomodação" onClick={() => abrirEdicao(acomodacao)}>
+                  <EditIcon />
+                </ActionButton>
+                <ActionButton title="Excluir acomodação" danger onClick={() => setAcomodacaoParaExcluir(acomodacao)}>
+                  <DeleteIcon />
+                </ActionButton>
+              </div>
+            )}
             emptyTitle={emptyTitle}
             emptyDescription={emptyDescription}
             itemLabel="acomodações"
@@ -284,8 +360,26 @@ export function AcomodacoesPage() {
 
       <AcomodacaoFormModal
         open={modalCadastroAberto}
-        onClose={() => setModalCadastroAberto(false)}
+        initialAcomodacao={acomodacaoEmEdicao}
+        onClose={() => {
+          setModalCadastroAberto(false)
+          setAcomodacaoEmEdicao(null)
+        }}
         onSubmit={salvarAcomodacaoNoBackend}
+      />
+
+      <ConfirmDialog
+        open={Boolean(acomodacaoParaExcluir)}
+        title="Excluir acomodação"
+        message={
+          acomodacaoParaExcluir
+            ? `Tem certeza que deseja excluir ${formatarNomeAcomodacao(acomodacaoParaExcluir.nome)}?`
+            : 'Tem certeza que deseja excluir esta acomodação?'
+        }
+        confirmLabel={excluindo ? 'Excluindo...' : 'Excluir'}
+        loading={excluindo}
+        onConfirm={confirmarExclusao}
+        onClose={() => setAcomodacaoParaExcluir(null)}
       />
     </section>
   )

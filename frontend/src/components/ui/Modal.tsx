@@ -48,10 +48,6 @@ export function Modal({ open, title, description, children, footer, size = 'lg',
             </h2>
             {description ? <p className="modal-description">{description}</p> : null}
           </div>
-
-          <button type="button" className="modal-close-button" aria-label="Fechar modal" onClick={onClose}>
-            ×
-          </button>
         </header>
 
         <div className="modal-body">{children}</div>

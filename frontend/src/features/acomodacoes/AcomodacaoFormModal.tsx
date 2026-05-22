@@ -2,17 +2,19 @@ import { useEffect, useMemo, useState } from 'react'
 import { Modal } from '../../components/ui/Modal'
 import {
   NOME_ACOMODACAO_OPTIONS,
+  acomodacaoParaFormulario,
   criarFormularioVazio,
   formatarNomeAcomodacao,
+  type AcomodacaoDTO,
   type AcomodacaoFormValues,
   formularioParaPayload,
-  type AcomodacaoPayload,
 } from './types'
 
 type AcomodacaoFormModalProps = {
   open: boolean
+  initialAcomodacao: AcomodacaoDTO | null
   onClose: () => void
-  onSubmit: (payload: AcomodacaoPayload) => Promise<void>
+  onSubmit: (id: number | null, payload: ReturnType<typeof formularioParaPayload>) => Promise<void>
 }
 
 function Field({
@@ -32,7 +34,7 @@ function Field({
   )
 }
 
-export function AcomodacaoFormModal({ open, onClose, onSubmit }: AcomodacaoFormModalProps) {
+export function AcomodacaoFormModal({ open, initialAcomodacao, onClose, onSubmit }: AcomodacaoFormModalProps) {
   const [formulario, setFormulario] = useState<AcomodacaoFormValues>(() => criarFormularioVazio())
   const [erro, setErro] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
@@ -44,13 +46,18 @@ export function AcomodacaoFormModal({ open, onClose, onSubmit }: AcomodacaoFormM
 
     setErro(null)
     setEnviando(false)
-    setFormulario(criarFormularioVazio())
-  }, [open])
+    setFormulario(initialAcomodacao ? acomodacaoParaFormulario(initialAcomodacao) : criarFormularioVazio())
+  }, [initialAcomodacao, open])
 
-  const titulo = useMemo(() => 'Cadastrar Acomodação', [])
+  const ehEdicao = Boolean(initialAcomodacao)
+  const titulo = useMemo(() => (ehEdicao ? 'Editar Acomodação' : 'Cadastrar Acomodação'), [ehEdicao])
   const descricao = useMemo(
-    () => 'Informe o tipo da acomodação e sua composição para adicioná-la à lista exibida na tela.',
-    [],
+    () => (
+      ehEdicao
+        ? 'Atualize o tipo da acomodação e sua composição para refletir a configuração correta no sistema.'
+        : 'Informe o tipo da acomodação e sua composição para adicioná-la à lista exibida na tela.'
+    ),
+    [ehEdicao],
   )
 
   function atualizarCampo<K extends keyof AcomodacaoFormValues>(campo: K, valor: AcomodacaoFormValues[K]) {
@@ -63,7 +70,7 @@ export function AcomodacaoFormModal({ open, onClose, onSubmit }: AcomodacaoFormM
     setEnviando(true)
 
     try {
-      await onSubmit(formularioParaPayload(formulario))
+      await onSubmit(initialAcomodacao?.id ?? null, formularioParaPayload(formulario))
       onClose()
     } catch (error) {
       setErro(error instanceof Error ? error.message : 'Não foi possível salvar a acomodação.')

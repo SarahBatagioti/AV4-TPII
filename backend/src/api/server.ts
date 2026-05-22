@@ -200,6 +200,15 @@ function nomeAcomodacaoEhValido(nome: string): nome is NomeAcomodacao {
     ].includes(nome)
 }
 
+function aplicarDadosAcomodacao(acomodacao: Acomodacao, payload: AcomodacaoPayload): void {
+    acomodacao.NomeAcomodacao = payload.nome
+    acomodacao.CamaSolteiro = payload.camaSolteiro
+    acomodacao.CamaCasal = payload.camaCasal
+    acomodacao.Suite = payload.suite
+    acomodacao.Climatizacao = payload.climatizacao
+    acomodacao.Garagem = payload.garagem
+}
+
 function hospedagemParaDTO(hospedagem: Hospedagem, indice: number): HospedagemDTO {
     const armazem = Armazem.obterInstancia()
     const acomodacoes = armazem.obterAcomodacoes()
@@ -364,6 +373,51 @@ async function processarRequisicao(requisicao: IncomingMessage, resposta: Server
             return
         } catch {
             responderJSON(resposta, 400, { mensagem: "Nao foi possivel processar o corpo da requisicao." })
+            return
+        }
+    }
+
+    if (segmentos.length === 2 && segmentos[0] === "acomodacoes") {
+        const id = Number(segmentos[1])
+        if (Number.isNaN(id)) {
+            responderJSON(resposta, 400, { mensagem: "ID invalido." })
+            return
+        }
+
+        const armazem = Armazem.obterInstancia()
+        const acomodacao = armazem.buscarAcomodacaoPorId(id)
+
+        if (!acomodacao) {
+            responderJSON(resposta, 404, { mensagem: "Acomodacao nao encontrada." })
+            return
+        }
+
+        if (metodo === "PUT") {
+            try {
+                const payload = await lerCorpoJSON<AcomodacaoPayload>(requisicao)
+
+                if (!acomodacaoPayloadValido(payload) || !nomeAcomodacaoEhValido(payload.nome)) {
+                    responderJSON(resposta, 400, { mensagem: "Informe dados validos para a acomodacao." })
+                    return
+                }
+
+                aplicarDadosAcomodacao(acomodacao, payload)
+                responderJSON(resposta, 200, acomodacaoParaDTO(acomodacao, id - 1))
+                return
+            } catch {
+                responderJSON(resposta, 400, { mensagem: "Nao foi possivel processar o corpo da requisicao." })
+                return
+            }
+        }
+
+        if (metodo === "DELETE") {
+            const removido = armazem.removerAcomodacao(id)
+            if (!removido) {
+                responderJSON(resposta, 400, { mensagem: "Nao foi possivel remover a acomodacao." })
+                return
+            }
+
+            responderSemConteudo(resposta, 204)
             return
         }
     }

@@ -28,23 +28,47 @@ export default class Acomodacao {
         return this.nomeAcomodacao
     }
 
+    public set NomeAcomodacao(nomeAcomodacao: NomeAcomodacao) {
+        this.nomeAcomodacao = nomeAcomodacao
+    }
+
     public get CamaSolteiro(): number {
         return this.camaSolteiro
+    }
+
+    public set CamaSolteiro(camaSolteiro: number) {
+        this.camaSolteiro = camaSolteiro
     }
 
     public get CamaCasal(): number {
         return this.camaCasal
     }
 
+    public set CamaCasal(camaCasal: number) {
+        this.camaCasal = camaCasal
+    }
+
     public get Suite(): number {
         return this.suite
+    }
+
+    public set Suite(suite: number) {
+        this.suite = suite
     }
 
     public get Climatizacao(): boolean {
         return this.climatizacao
     }
 
+    public set Climatizacao(climatizacao: boolean) {
+        this.climatizacao = climatizacao
+    }
+
     public get Garagem(): number {
         return this.garagem
+    }
+
+    public set Garagem(garagem: number) {
+        this.garagem = garagem
     }
 }

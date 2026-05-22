@@ -40,12 +40,20 @@ export default class Armazem {
         return this.acomodacoes
     }
 
+    public buscarAcomodacaoPorId(id: number): Acomodacao | undefined {
+        return this.acomodacoes[id - 1]
+    }
+
     public cadastrarHospedagem(hospedagem: Hospedagem): void {
         this.hospedagensAtuais.push(hospedagem)
     }
 
     public obterHospedagensAtuais(): Hospedagem[] {
         return this.hospedagensAtuais
+    }
+
+    public acomodacaoEstaEmUso(acomodacao: Acomodacao): boolean {
+        return this.hospedagensAtuais.some(hospedagem => hospedagem.Acomodacao === acomodacao)
     }
 
     public clienteEstaHospedado(id: number): boolean {
@@ -83,6 +91,20 @@ export default class Armazem {
         })
 
         this.clientes = this.clientes.filter(atual => atual.id !== id)
+        return true
+    }
+
+    public removerAcomodacao(id: number): boolean {
+        const acomodacao = this.buscarAcomodacaoPorId(id)
+        if (!acomodacao) {
+            return false
+        }
+
+        if (this.acomodacaoEstaEmUso(acomodacao)) {
+            return false
+        }
+
+        this.acomodacoes = this.acomodacoes.filter((_, indice) => indice !== id - 1)
         return true
     }
 }

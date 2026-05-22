@@ -740,20 +740,6 @@
   color: #8e3030;
 }
 
-.modal-close-button {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  border: 1px solid rgba(43, 124, 168, 0.12);
-  background: rgba(255, 255, 255, 0.94);
-  color: #215e81;
-  cursor: pointer;
-}
-
-.modal-close-button:hover {
-  background: rgba(186, 220, 234, 0.5);
-}
-
 .confirm-content {
   display: flex;
   flex-direction: column;

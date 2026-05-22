@@ -58,6 +58,17 @@ export function criarFormularioVazio(): AcomodacaoFormValues {
   }
 }
 
+export function acomodacaoParaFormulario(acomodacao: AcomodacaoDTO): AcomodacaoFormValues {
+  return {
+    nome: acomodacao.nome as NomeAcomodacao,
+    camaSolteiro: String(acomodacao.camaSolteiro),
+    camaCasal: String(acomodacao.camaCasal),
+    suite: String(acomodacao.suite),
+    climatizacao: acomodacao.climatizacao,
+    garagem: String(acomodacao.garagem),
+  }
+}
+
 export function formularioParaPayload(formulario: AcomodacaoFormValues): AcomodacaoPayload {
   return {
     nome: formulario.nome,

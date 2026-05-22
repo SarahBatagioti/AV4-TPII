@@ -40,3 +40,16 @@ export function cadastrarAcomodacao(payload: AcomodacaoPayload): Promise<Acomoda
     body: JSON.stringify(payload),
   })
 }
+
+export function salvarAcomodacao(id: number | null, payload: AcomodacaoPayload): Promise<AcomodacaoDTO> {
+  return requestJSON<AcomodacaoDTO>(id ? `/acomodacoes/${id}` : '/acomodacoes', {
+    method: id ? 'PUT' : 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function excluirAcomodacao(id: number): Promise<void> {
+  return requestJSON<void>(`/acomodacoes/${id}`, {
+    method: 'DELETE',
+  })
+}
