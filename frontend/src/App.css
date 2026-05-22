@@ -268,6 +268,79 @@
   overflow: hidden;
 }
 
+.filters-card {
+  width: fit-content;
+  max-width: 100%;
+  padding: 18px 20px 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(43, 124, 168, 0.12);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+.filters-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.filter-field {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.filter-field--search {
+  flex-basis: 280px;
+  min-width: 280px;
+}
+
+.filter-field--md {
+  flex-basis: 220px;
+  min-width: 220px;
+}
+
+.filter-field--sm {
+  flex-basis: 170px;
+  min-width: 170px;
+}
+
+.filter-field--xs {
+  flex-basis: 132px;
+  min-width: 132px;
+}
+
+.filters-bar .form-field {
+  gap: 16px;
+}
+
+.filters-bar .form-field label {
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.filters-bar .form-field input,
+.filters-bar .form-field select {
+  min-height: 50px;
+  padding: 14px 16px;
+  font-size: 15px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 24px rgba(43, 124, 168, 0.08);
+}
+
+.filters-bar .form-field select,
+.form-field select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 42px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23215e81' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 12px 8px;
+}
+
 .section-card__header {
   display: flex;
   justify-content: space-between;
@@ -697,6 +770,16 @@
     min-width: 1040px;
   }
 
+  .filter-field--search {
+    flex-basis: 240px;
+    min-width: 240px;
+  }
+
+  .filter-field--md {
+    flex-basis: 200px;
+    min-width: 200px;
+  }
+
   .form-field--span-6,
   .form-field--span-4,
   .form-field--span-5,
@@ -724,6 +807,23 @@
 
   .page-content {
     padding: 20px;
+  }
+
+  .filters-bar {
+    align-items: stretch;
+  }
+
+  .filters-card {
+    width: 100%;
+  }
+
+  .filter-field,
+  .filter-field--search,
+  .filter-field--md,
+  .filter-field--sm,
+  .filter-field--xs {
+    flex: 1 1 100%;
+    min-width: 0;
   }
 
   .hero-card,

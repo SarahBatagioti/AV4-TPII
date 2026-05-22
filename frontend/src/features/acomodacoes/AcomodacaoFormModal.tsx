@@ -3,6 +3,7 @@ import { Modal } from '../../components/ui/Modal'
 import {
   NOME_ACOMODACAO_OPTIONS,
   criarFormularioVazio,
+  formatarNomeAcomodacao,
   type AcomodacaoFormValues,
   formularioParaPayload,
   type AcomodacaoPayload,
@@ -65,7 +66,7 @@ export function AcomodacaoFormModal({ open, onClose, onSubmit }: AcomodacaoFormM
       await onSubmit(formularioParaPayload(formulario))
       onClose()
     } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Nao foi possivel salvar a acomodacao.')
+      setErro(error instanceof Error ? error.message : 'Não foi possível salvar a acomodação.')
     } finally {
       setEnviando(false)
     }
@@ -95,7 +96,7 @@ export function AcomodacaoFormModal({ open, onClose, onSubmit }: AcomodacaoFormM
             <select value={formulario.nome} onChange={(event) => atualizarCampo('nome', event.target.value as AcomodacaoFormValues['nome'])} required>
               {NOME_ACOMODACAO_OPTIONS.map((opcao) => (
                 <option key={opcao} value={opcao}>
-                  {opcao}
+                  {formatarNomeAcomodacao(opcao)}
                 </option>
               ))}
             </select>

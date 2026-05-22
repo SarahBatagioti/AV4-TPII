@@ -110,7 +110,7 @@ export function ClienteFormModal({ open, initialCliente, titulares, onClose, onS
       await onSubmit(initialCliente?.id ?? null, formularioParaPayload(formulario))
       onClose()
     } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Nao foi possivel salvar o cliente.')
+      setErro(error instanceof Error ? error.message : 'Não foi possível salvar o cliente.')
     } finally {
       setEnviando(false)
     }

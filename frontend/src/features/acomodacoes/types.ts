@@ -15,6 +15,10 @@ export const NOME_ACOMODACAO_OPTIONS: NomeAcomodacao[] = [
   'Solteiro Mais',
 ]
 
+export function formatarNomeAcomodacao(nome: string): string {
+  return nome.replace(/^Familia\b/, 'Família')
+}
+
 export type AcomodacaoDTO = {
   id: number
   nome: string

@@ -12,7 +12,7 @@ async function requestJSON<T>(path: string, init?: RequestInit): Promise<T> {
   })
 
   if (!response.ok) {
-    let message = 'Nao foi possivel concluir a operacao.'
+    let message = 'Não foi possível concluir a operação.'
     try {
       const body = (await response.json()) as { mensagem?: string }
       message = body.mensagem ?? message

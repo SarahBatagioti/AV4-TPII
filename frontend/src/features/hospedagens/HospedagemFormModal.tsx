@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Modal } from '../../components/ui/Modal'
+import { formatarNomeAcomodacao } from '../acomodacoes/types'
 import type { ClienteDTO } from '../clientes/types'
 import { criarFormularioVazio, formularioParaPayload, type AcomodacaoDTO, type HospedagemFormValues } from './types'
 
@@ -30,7 +31,7 @@ function Field({
 
 function formatarAcomodacao(acomodacao: AcomodacaoDTO): string {
   return [
-    `${acomodacao.nome}`,
+    `${formatarNomeAcomodacao(acomodacao.nome)}`,
     `${acomodacao.camaSolteiro} solteiro(s)`,
     `${acomodacao.camaCasal} casal(is)`,
     `${acomodacao.suite} suíte(s)`,
@@ -107,7 +108,7 @@ export function HospedagemFormModal({ open, acomodacoes, clientesDisponiveis, on
       await onSubmit(formularioParaPayload(formulario))
       onClose()
     } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Nao foi possivel salvar a hospedagem.')
+      setErro(error instanceof Error ? error.message : 'Não foi possível salvar a hospedagem.')
     } finally {
       setEnviando(false)
     }

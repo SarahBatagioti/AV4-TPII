@@ -6,6 +6,19 @@ import { ClienteFormModal } from './ClienteFormModal'
 import { formatarNumeroDocumento, formatarTelefone as formatarNumeroTelefone, type ClienteDTO } from './types'
 
 const PAGE_SIZE = 5
+const CLIENTE_TIPO_OPTIONS = [
+  { value: 'todos', label: 'Todos' },
+  { value: 'titular', label: 'Titular' },
+  { value: 'dependente', label: 'Dependente' },
+] as const
+
+function normalizarBusca(valor: string): string {
+  return valor
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
 
 function formatarData(dataISO: string): string {
   return new Intl.DateTimeFormat('pt-BR', {
@@ -73,6 +86,8 @@ export function ClientesPage() {
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
   const [pagina, setPagina] = useState(1)
+  const [busca, setBusca] = useState('')
+  const [tipoFiltro, setTipoFiltro] = useState<(typeof CLIENTE_TIPO_OPTIONS)[number]['value']>('todos')
   const [clienteEmEdicao, setClienteEmEdicao] = useState<ClienteDTO | null>(null)
   const [modalCadastroAberto, setModalCadastroAberto] = useState(false)
   const [clienteParaExcluir, setClienteParaExcluir] = useState<ClienteDTO | null>(null)
@@ -86,7 +101,7 @@ export function ClientesPage() {
       const dados = await listarClientes()
       setClientes(dados)
     } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Nao foi possivel carregar os clientes.')
+      setErro(error instanceof Error ? error.message : 'Não foi possível carregar os clientes.')
     } finally {
       setCarregando(false)
     }
@@ -101,12 +116,36 @@ export function ClientesPage() {
     [clienteEmEdicao?.id, clientes],
   )
 
+  const clientesFiltrados = useMemo(() => {
+    const termoBusca = normalizarBusca(busca)
+
+    return clientes.filter((cliente) => {
+      if (tipoFiltro !== 'todos' && cliente.tipo !== tipoFiltro) {
+        return false
+      }
+
+      if (!termoBusca) {
+        return true
+      }
+
+      const documento = cliente.documentos[0]
+      const documentoFormatado = documento ? formatarNumeroDocumento(documento.numero, documento.tipo) : ''
+      const camposBusca = [cliente.nome, documento?.numero ?? '', documentoFormatado]
+
+      return camposBusca.some((campo) => normalizarBusca(campo).includes(termoBusca))
+    })
+  }, [busca, clientes, tipoFiltro])
+
   useEffect(() => {
-    const totalPaginas = Math.max(1, Math.ceil(clientes.length / PAGE_SIZE))
+    const totalPaginas = Math.max(1, Math.ceil(clientesFiltrados.length / PAGE_SIZE))
     if (pagina > totalPaginas) {
       setPagina(totalPaginas)
     }
-  }, [clientes.length, pagina])
+  }, [clientesFiltrados.length, pagina])
+
+  useEffect(() => {
+    setPagina(1)
+  }, [busca, tipoFiltro])
 
   function abrirCadastro() {
     setClienteEmEdicao(null)
@@ -137,7 +176,7 @@ export function ClientesPage() {
       setClienteParaExcluir(null)
       await carregarClientes()
     } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Nao foi possivel excluir o cliente.')
+      setErro(error instanceof Error ? error.message : 'Não foi possível excluir o cliente.')
     } finally {
       setExcluindo(false)
     }
@@ -209,6 +248,12 @@ export function ClientesPage() {
     },
   ]
 
+  const haFiltrosAtivos = busca.trim() !== '' || tipoFiltro !== 'todos'
+  const emptyTitle = haFiltrosAtivos ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado'
+  const emptyDescription = haFiltrosAtivos
+    ? 'Ajuste os filtros para visualizar outros clientes cadastrados.'
+    : 'Use o botão Cadastrar Cliente para criar o primeiro registro e iniciar a gestão da base.'
+
   return (
     <section className="clientes-page">
       <div className="page-header">
@@ -231,27 +276,54 @@ export function ClientesPage() {
       {carregando ? <div className="section-card empty-state"><h3>Carregando clientes...</h3><p>Aguarde enquanto buscamos os dados no backend.</p></div> : null}
 
       {!carregando ? (
-        <PaginatedTable
-          items={clientes}
-          columns={colunas}
-          rowKey={(cliente) => cliente.id}
-          page={pagina}
-          pageSize={PAGE_SIZE}
-          onPageChange={setPagina}
-          renderActions={(cliente) => (
-            <div className="actions-group">
-              <ActionButton title="Editar cliente" onClick={() => abrirEdicao(cliente)}>
-                <EditIcon />
-              </ActionButton>
-              <ActionButton title="Excluir cliente" danger onClick={() => setClienteParaExcluir(cliente)}>
-                <DeleteIcon />
-              </ActionButton>
+        <>
+          <div className="filters-card">
+            <div className="filters-bar">
+              <div className="form-field filter-field filter-field--search">
+                <label htmlFor="clientes-busca">Buscar por nome ou documento</label>
+                <input
+                  id="clientes-busca"
+                  value={busca}
+                  onChange={(event) => setBusca(event.target.value)}
+                  placeholder="Ex.: Maria ou 123.456.789-00"
+                />
+              </div>
+
+              <div className="form-field filter-field filter-field--sm">
+                <label htmlFor="clientes-tipo">Tipo</label>
+                <select id="clientes-tipo" value={tipoFiltro} onChange={(event) => setTipoFiltro(event.target.value as typeof tipoFiltro)}>
+                  {CLIENTE_TIPO_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-          )}
-          emptyTitle="Nenhum cliente cadastrado"
-          emptyDescription="Use o botão Cadastrar Cliente para criar o primeiro registro e iniciar a gestão da base."
-          itemLabel="clientes"
-        />
+          </div>
+
+          <PaginatedTable
+            items={clientesFiltrados}
+            columns={colunas}
+            rowKey={(cliente) => cliente.id}
+            page={pagina}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPagina}
+            renderActions={(cliente) => (
+              <div className="actions-group">
+                <ActionButton title="Editar cliente" onClick={() => abrirEdicao(cliente)}>
+                  <EditIcon />
+                </ActionButton>
+                <ActionButton title="Excluir cliente" danger onClick={() => setClienteParaExcluir(cliente)}>
+                  <DeleteIcon />
+                </ActionButton>
+              </div>
+            )}
+            emptyTitle={emptyTitle}
+            emptyDescription={emptyDescription}
+            itemLabel="clientes"
+          />
+        </>
       ) : null}
 
       <ClienteFormModal

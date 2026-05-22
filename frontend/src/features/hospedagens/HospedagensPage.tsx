@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { PaginatedTable } from '../../components/ui/PaginatedTable'
+import { formatarNomeAcomodacao } from '../acomodacoes/types'
 import { listarClientes } from '../clientes/clienteApi'
 import type { ClienteDTO } from '../clientes/types'
 import { type AcomodacaoDTO, type HospedagemDTO } from './types'
@@ -7,6 +8,14 @@ import { cadastrarHospedagem, listarAcomodacoes, listarHospedagens } from './hos
 import { HospedagemFormModal } from './HospedagemFormModal'
 
 const PAGE_SIZE = 5
+
+function normalizarBusca(valor: string): string {
+  return valor
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
 
 function formatarClimatizacao(valor: boolean): string {
   return valor ? 'Sim' : 'Não'
@@ -37,6 +46,8 @@ export function HospedagensPage() {
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
   const [pagina, setPagina] = useState(1)
+  const [buscaHospede, setBuscaHospede] = useState('')
+  const [acomodacaoFiltro, setAcomodacaoFiltro] = useState('todas')
   const [modalCadastroAberto, setModalCadastroAberto] = useState(false)
 
   async function carregarDados() {
@@ -54,7 +65,7 @@ export function HospedagensPage() {
       setAcomodacoes(acomodacoesDados)
       setClientes(clientesDados)
     } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Nao foi possivel carregar as hospedagens.')
+      setErro(error instanceof Error ? error.message : 'Não foi possível carregar as hospedagens.')
     } finally {
       setCarregando(false)
     }
@@ -64,12 +75,32 @@ export function HospedagensPage() {
     void carregarDados()
   }, [])
 
+  const hospedagensFiltradas = useMemo(() => {
+    const termoBusca = normalizarBusca(buscaHospede)
+
+    return hospedagens.filter((hospedagem) => {
+      if (acomodacaoFiltro !== 'todas' && String(hospedagem.acomodacao.id) !== acomodacaoFiltro) {
+        return false
+      }
+
+      if (!termoBusca) {
+        return true
+      }
+
+      return hospedagem.hospedes.some((hospede) => normalizarBusca(hospede.nome).includes(termoBusca))
+    })
+  }, [acomodacaoFiltro, buscaHospede, hospedagens])
+
   useEffect(() => {
-    const totalPaginas = Math.max(1, Math.ceil(hospedagens.length / PAGE_SIZE))
+    const totalPaginas = Math.max(1, Math.ceil(hospedagensFiltradas.length / PAGE_SIZE))
     if (pagina > totalPaginas) {
       setPagina(totalPaginas)
     }
-  }, [hospedagens.length, pagina])
+  }, [hospedagensFiltradas.length, pagina])
+
+  useEffect(() => {
+    setPagina(1)
+  }, [acomodacaoFiltro, buscaHospede])
 
   const clientesDisponiveis = useMemo(
     () => clientes.filter((cliente) => !hospedagens.some((hospedagem) => hospedagem.hospedes.some((hospede) => hospede.id === cliente.id))),
@@ -95,7 +126,7 @@ export function HospedagensPage() {
       header: 'Acomodação',
       render: (hospedagem: HospedagemDTO) => (
         <div className="cell-stack">
-          <strong>{hospedagem.acomodacao.nome}</strong>
+          <strong>{formatarNomeAcomodacao(hospedagem.acomodacao.nome)}</strong>
           <span className="cell-muted">{formatarAcomodacao(hospedagem.acomodacao)}</span>
         </div>
       ),
@@ -120,6 +151,12 @@ export function HospedagensPage() {
     },
   ]
 
+  const haFiltrosAtivos = buscaHospede.trim() !== '' || acomodacaoFiltro !== 'todas'
+  const emptyTitle = haFiltrosAtivos ? 'Nenhuma hospedagem encontrada' : 'Nenhuma hospedagem cadastrada'
+  const emptyDescription = haFiltrosAtivos
+    ? 'Ajuste os filtros para visualizar outras hospedagens cadastradas.'
+    : 'Use o botão Cadastrar Hospedagem para registrar a primeira hospedagem no sistema.'
+
   return (
     <section className="clientes-page hospedagem-page">
       <div className="page-header">
@@ -142,17 +179,45 @@ export function HospedagensPage() {
       {carregando ? <div className="section-card empty-state"><h3>Carregando hospedagens...</h3><p>Aguarde enquanto buscamos os dados no backend.</p></div> : null}
 
       {!carregando ? (
-        <PaginatedTable
-          items={hospedagens}
-          columns={colunas}
-          rowKey={(hospedagem) => hospedagem.id}
-          page={pagina}
-          pageSize={PAGE_SIZE}
-          onPageChange={setPagina}
-          emptyTitle="Nenhuma hospedagem cadastrada"
-          emptyDescription="Use o botão Cadastrar Hospedagem para registrar a primeira hospedagem no sistema."
-          itemLabel="hospedagens"
-        />
+        <>
+          <div className="filters-card">
+            <div className="filters-bar">
+              <div className="form-field filter-field filter-field--search">
+                <label htmlFor="hospedagens-busca">Buscar por nome de hóspede</label>
+                <input
+                  id="hospedagens-busca"
+                  value={buscaHospede}
+                  onChange={(event) => setBuscaHospede(event.target.value)}
+                  placeholder="Ex.: Maria"
+                />
+              </div>
+
+              <div className="form-field filter-field filter-field--md">
+                <label htmlFor="hospedagens-acomodacao">Acomodação</label>
+                <select id="hospedagens-acomodacao" value={acomodacaoFiltro} onChange={(event) => setAcomodacaoFiltro(event.target.value)}>
+                  <option value="todas">Todas</option>
+                  {acomodacoes.map((acomodacao) => (
+                    <option key={acomodacao.id} value={acomodacao.id}>
+                      {formatarNomeAcomodacao(acomodacao.nome)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <PaginatedTable
+            items={hospedagensFiltradas}
+            columns={colunas}
+            rowKey={(hospedagem) => hospedagem.id}
+            page={pagina}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPagina}
+            emptyTitle={emptyTitle}
+            emptyDescription={emptyDescription}
+            itemLabel="hospedagens"
+          />
+        </>
       ) : null}
 
       <HospedagemFormModal
