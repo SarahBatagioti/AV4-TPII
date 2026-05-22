@@ -13,7 +13,7 @@ type PaginatedTableProps<T> = {
   page: number
   pageSize: number
   onPageChange: (page: number) => void
-  renderActions: (item: T) => ReactNode
+  renderActions?: (item: T) => ReactNode
   emptyTitle: string
   emptyDescription: string
   itemLabel: string
@@ -55,7 +55,7 @@ export function PaginatedTable<T>({
                     {column.header}
                   </th>
                 ))}
-                <th>Ações</th>
+                {renderActions ? <th>Ações</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -66,7 +66,7 @@ export function PaginatedTable<T>({
                       {column.render(item)}
                     </td>
                   ))}
-                  <td>{renderActions(item)}</td>
+                  {renderActions ? <td>{renderActions(item)}</td> : null}
                 </tr>
               ))}
             </tbody>

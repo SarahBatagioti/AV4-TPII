@@ -7,16 +7,24 @@ import type { AcomodacaoDTO } from './types'
 const PAGE_SIZE = 5
 
 function formatarClimatizacao(valor: boolean): string {
-  return valor ? 'Com climatização' : 'Sem climatização'
+  return valor ? 'Contém' : 'Não contém'
 }
 
-function formatarResumo(acomodacao: AcomodacaoDTO): string {
-  return [
-    `${acomodacao.camaSolteiro} solteiro(s)`,
-    `${acomodacao.camaCasal} casal(is)`,
-    `${acomodacao.suite} suíte(s)`,
-    `${acomodacao.garagem} vaga(s)`,
-  ].join(' • ')
+function formatarQuantidade(valor: number, singular: string, plural: string): string | null {
+  if (valor === 0) {
+    return null
+  }
+
+  return `${valor} ${valor === 1 ? singular : plural}`
+}
+
+function formatarCamas(acomodacao: AcomodacaoDTO): string {
+  const camas = [
+    formatarQuantidade(acomodacao.camaSolteiro, 'solteiro', 'solteiros'),
+    formatarQuantidade(acomodacao.camaCasal, 'casal', 'casais'),
+  ].filter((item): item is string => item !== null)
+
+  return camas.length > 0 ? camas.join(', ') : '-'
 }
 
 export function AcomodacoesPage() {
@@ -64,25 +72,27 @@ export function AcomodacoesPage() {
   const colunas = useMemo(
     () => [
       {
-        header: 'ID',
-        render: (acomodacao: AcomodacaoDTO) => <strong>{acomodacao.id}</strong>,
+        header: 'Tipo de acomodação',
+        render: (acomodacao: AcomodacaoDTO) => <strong>{acomodacao.nome}</strong>,
       },
       {
-        header: 'Acomodação',
-        render: (acomodacao: AcomodacaoDTO) => (
-          <div className="cell-stack">
-            <strong>{acomodacao.nome}</strong>
-            <span className="cell-muted">{formatarResumo(acomodacao)}</span>
-          </div>
-        ),
+        header: 'Camas',
+        render: (acomodacao: AcomodacaoDTO) => <span className="cell-compact">{formatarCamas(acomodacao)}</span>,
       },
       {
-        header: 'Detalhes',
+        header: 'Suítes',
+        render: (acomodacao: AcomodacaoDTO) => <span className="cell-compact">{acomodacao.suite}</span>,
+      },
+      {
+        header: 'Garagem',
+        render: (acomodacao: AcomodacaoDTO) => <span className="cell-compact">{acomodacao.garagem}</span>,
+      },
+      {
+        header: 'Climatização',
         render: (acomodacao: AcomodacaoDTO) => (
-          <div className="cell-stack">
-            <span className="tag">{formatarClimatizacao(acomodacao.climatizacao)}</span>
-            <span className="cell-muted">Garagem: {acomodacao.garagem}</span>
-          </div>
+          <span className={`status-flag ${acomodacao.climatizacao ? 'status-flag--positive' : 'status-flag--negative'}`}>
+            {formatarClimatizacao(acomodacao.climatizacao)}
+          </span>
         ),
       },
     ],
@@ -118,7 +128,6 @@ export function AcomodacoesPage() {
           page={pagina}
           pageSize={PAGE_SIZE}
           onPageChange={setPagina}
-          renderActions={() => <span className="cell-muted">—</span>}
           emptyTitle="Nenhuma acomodação cadastrada"
           emptyDescription="Use o botão Cadastrar Acomodação para incluir a primeira opção no painel."
           itemLabel="acomodações"

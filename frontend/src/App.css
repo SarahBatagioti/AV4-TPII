@@ -338,6 +338,31 @@
   color: #1e5a7c;
 }
 
+.cell-compact {
+  font-weight: 600;
+}
+
+.status-flag {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.status-flag--positive {
+  background: rgba(43, 124, 168, 0.12);
+  color: #2b7ca8;
+}
+
+.status-flag--negative {
+  background: rgba(182, 69, 69, 0.12);
+  color: #b64545;
+}
+
 .actions-group {
   display: inline-flex;
   align-items: center;
