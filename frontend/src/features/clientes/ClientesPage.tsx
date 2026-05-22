@@ -3,7 +3,7 @@ import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
 import { PaginatedTable } from '../../components/ui/PaginatedTable'
 import { excluirCliente, listarClientes, salvarCliente } from './clienteApi'
 import { ClienteFormModal } from './ClienteFormModal'
-import type { ClienteDTO } from './types'
+import { formatarNumeroDocumento, formatarTelefone as formatarNumeroTelefone, type ClienteDTO } from './types'
 
 const PAGE_SIZE = 5
 
@@ -16,7 +16,15 @@ function formatarData(dataISO: string): string {
 }
 
 function formatarTelefone(ddd: string, numero: string): string {
-  return `(${ddd}) ${numero}`
+  if (!numero || numero === '-') {
+    return '-'
+  }
+
+  if (!ddd || ddd === '-') {
+    return numero
+  }
+
+  return `(${ddd}) ${formatarNumeroTelefone(numero)}`
 }
 
 function renderEndereco(cliente: ClienteDTO): string {
@@ -166,7 +174,11 @@ export function ClientesPage() {
       header: 'Documento',
       render: (cliente: ClienteDTO) => (
         <div className="cell-stack">
-          <strong>{cliente.documentos[0]?.numero ?? 'Sem documento'}</strong>
+          <strong>
+            {cliente.documentos[0]
+              ? formatarNumeroDocumento(cliente.documentos[0].numero, cliente.documentos[0].tipo)
+              : 'Sem documento'}
+          </strong>
           <span className="cell-muted">{cliente.documentos[0]?.tipo ?? '-'}</span>
         </div>
       ),
