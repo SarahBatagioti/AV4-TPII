@@ -1,7 +1,6 @@
 ﻿![Banner Atlantis](assets/bannerAtlantis.png)
 
-O Atlantis é um sistema de gestão para parques aquáticos, clubes e hotéis. Nesta versão, o projeto atende ao MVP solicitado na atividade com um CLI em TypeScript para de cadastro e gerenciamento de
-hospedagens usando o padrão de projeto “Builder”.
+O Atlantis é um sistema de gestão para parques aquáticos, clubes e hotéis. Nesta versão, o projeto atende ao MVP solicitado na atividade com a construção de um frontend completado para toda a estrutura já construida.
 
 ## Requisitos para rodar
 
@@ -13,31 +12,41 @@ hospedagens usando o padrão de projeto “Builder”.
 ### 1) Clonar o repositório
 
 ```bash
-git clone https://github.com/SarahBatagioti/AV3-TPII
+git clone https://github.com/SarahBatagioti/AV4-TPII
 ```
 
 ### 2) Entrar na pasta do projeto
 
 ```bash
-cd AV3-TPII
+cd AV4-TPII
 ```
 
-### 3) Instalar dependências do projeto
+### 3) Instalar as dependências do backend
 
 ```bash
+cd backend
 npm install
 ```
 
-### 4) Compilar TypeScript para JavaScript
+### 4) Rodar o backend
 
 ```bash
-npm run build
+npm run start:api
 ```
 
-Saída esperada:
-- Os arquivos compilados serão gerados na pasta `js`.
+Espere aparecer a mensagem `API Atlantis rodando em http://localhost:3333`.
 
-### 5) Executar o projeto
+### 5) Instalar as dependências do frontend
+
 ```bash
-npm start
+cd ../frontend
+npm install
 ```
+
+### 6) Rodar o frontend
+
+```bash
+npm run dev
+```
+
+Espere aparecer o endereço local, normalmente `http://localhost:5173/`, e acesse esse link no navegador.
