@@ -52,12 +52,24 @@ export default class Armazem {
         return this.hospedagensAtuais
     }
 
+    public buscarHospedagemPorId(id: number): Hospedagem | undefined {
+        return this.hospedagensAtuais[id - 1]
+    }
+
     public acomodacaoEstaEmUso(acomodacao: Acomodacao): boolean {
         return this.hospedagensAtuais.some(hospedagem => hospedagem.Acomodacao === acomodacao)
     }
 
+    public acomodacaoEstaEmUsoPorOutraHospedagem(acomodacao: Acomodacao, hospedagemAtual: Hospedagem): boolean {
+        return this.hospedagensAtuais.some(hospedagem => hospedagem !== hospedagemAtual && hospedagem.Acomodacao === acomodacao)
+    }
+
     public clienteEstaHospedado(id: number): boolean {
         return this.hospedagensAtuais.some(hospedagem => hospedagem.contemHospede(id))
+    }
+
+    public clienteEstaHospedadoEmOutraHospedagem(id: number, hospedagemAtual: Hospedagem): boolean {
+        return this.hospedagensAtuais.some(hospedagem => hospedagem !== hospedagemAtual && hospedagem.contemHospede(id))
     }
 
     public buscarClientePorId(id: number): Cliente | undefined {
@@ -105,6 +117,16 @@ export default class Armazem {
         }
 
         this.acomodacoes = this.acomodacoes.filter((_, indice) => indice !== id - 1)
+        return true
+    }
+
+    public removerHospedagem(id: number): boolean {
+        const hospedagem = this.buscarHospedagemPorId(id)
+        if (!hospedagem) {
+            return false
+        }
+
+        this.hospedagensAtuais = this.hospedagensAtuais.filter((_, indice) => indice !== id - 1)
         return true
     }
 }

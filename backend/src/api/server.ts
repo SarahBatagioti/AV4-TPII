@@ -227,6 +227,51 @@ function hospedagemPayloadValido(payload: HospedagemPayload): boolean {
         && new Set(payload.hospedesIds).size === payload.hospedesIds.length
 }
 
+function validarHospedagem(
+    armazem: Armazem,
+    payload: HospedagemPayload,
+    hospedagemAtual?: Hospedagem
+): { acomodacao?: Acomodacao; hospedes?: Cliente[]; erro?: string } {
+    if (!hospedagemPayloadValido(payload)) {
+        return { erro: "Informe ao menos um hospede valido para a hospedagem." }
+    }
+
+    const acomodacao = armazem.buscarAcomodacaoPorId(payload.acomodacaoId)
+    if (!acomodacao) {
+        return { erro: "Acomodacao invalida." }
+    }
+
+    const acomodacaoEmUso = hospedagemAtual
+        ? armazem.acomodacaoEstaEmUsoPorOutraHospedagem(acomodacao, hospedagemAtual)
+        : armazem.acomodacaoEstaEmUso(acomodacao)
+
+    if (acomodacaoEmUso) {
+        return { erro: "A acomodacao informada ja esta vinculada a outra hospedagem ativa." }
+    }
+
+    const hospedes: Cliente[] = []
+
+    for (const clienteId of payload.hospedesIds) {
+        const cliente = armazem.buscarClientePorId(clienteId)
+
+        if (!cliente) {
+            return { erro: `Cliente ${clienteId} nao encontrado.` }
+        }
+
+        const clienteJaHospedado = hospedagemAtual
+            ? armazem.clienteEstaHospedadoEmOutraHospedagem(cliente.id, hospedagemAtual)
+            : armazem.clienteEstaHospedado(cliente.id)
+
+        if (clienteJaHospedado) {
+            return { erro: `O cliente ${cliente.nome} ja esta vinculado a uma hospedagem ativa.` }
+        }
+
+        hospedes.push(cliente)
+    }
+
+    return { acomodacao, hospedes }
+}
+
 function converterPayloadParaEndereco(payload: ClientePayload): Endereco {
     return new Endereco(
         payload.endereco.rua,
@@ -503,48 +548,70 @@ async function processarRequisicao(requisicao: IncomingMessage, resposta: Server
     if (metodo === "POST" && segmentos.length === 1 && segmentos[0] === "hospedagens") {
         try {
             const payload = await lerCorpoJSON<HospedagemPayload>(requisicao)
-
-            if (!hospedagemPayloadValido(payload)) {
-                responderJSON(resposta, 400, { mensagem: "Informe ao menos um hospede valido para a hospedagem." })
-                return
-            }
-
             const armazem = Armazem.obterInstancia()
-            const acomodacao = armazem.obterAcomodacoes()[payload.acomodacaoId - 1]
-
-            if (!acomodacao) {
-                responderJSON(resposta, 400, { mensagem: "Acomodacao invalida." })
+            const validacao = validarHospedagem(armazem, payload)
+            if (validacao.erro || !validacao.acomodacao || !validacao.hospedes) {
+                responderJSON(resposta, 400, { mensagem: validacao.erro ?? "Nao foi possivel validar a hospedagem." })
                 return
             }
 
-            const hospedagem = new Hospedagem(acomodacao)
-
-            for (const clienteId of payload.hospedesIds) {
-                const cliente = armazem.buscarClientePorId(clienteId)
-
-                if (!cliente) {
-                    responderJSON(resposta, 400, { mensagem: `Cliente ${clienteId} nao encontrado.` })
-                    return
-                }
-
-                if (armazem.clienteEstaHospedado(cliente.id)) {
-                    responderJSON(resposta, 400, { mensagem: `O cliente ${cliente.nome} ja esta vinculado a uma hospedagem ativa.` })
-                    return
-                }
-
-                if (hospedagem.contemHospede(cliente.id)) {
-                    responderJSON(resposta, 400, { mensagem: `O cliente ${cliente.nome} ja foi adicionado nesta hospedagem.` })
-                    return
-                }
-
-                hospedagem.adicionarHospede(cliente)
-            }
+            const hospedagem = new Hospedagem(validacao.acomodacao)
+            validacao.hospedes.forEach(cliente => hospedagem.adicionarHospede(cliente))
 
             armazem.cadastrarHospedagem(hospedagem)
             responderJSON(resposta, 201, hospedagemParaDTO(hospedagem, armazem.obterHospedagensAtuais().length - 1))
             return
         } catch {
             responderJSON(resposta, 400, { mensagem: "Nao foi possivel processar o corpo da requisicao." })
+            return
+        }
+    }
+
+    if (segmentos.length === 2 && segmentos[0] === "hospedagens") {
+        const id = Number(segmentos[1])
+        if (Number.isNaN(id)) {
+            responderJSON(resposta, 400, { mensagem: "ID invalido." })
+            return
+        }
+
+        const armazem = Armazem.obterInstancia()
+        const hospedagem = armazem.buscarHospedagemPorId(id)
+
+        if (!hospedagem) {
+            responderJSON(resposta, 404, { mensagem: "Hospedagem nao encontrada." })
+            return
+        }
+
+        if (metodo === "PUT") {
+            try {
+                const payload = await lerCorpoJSON<HospedagemPayload>(requisicao)
+                const validacao = validarHospedagem(armazem, payload, hospedagem)
+
+                if (validacao.erro || !validacao.acomodacao || !validacao.hospedes) {
+                    responderJSON(resposta, 400, { mensagem: validacao.erro ?? "Nao foi possivel validar a hospedagem." })
+                    return
+                }
+
+                hospedagem.Acomodacao = validacao.acomodacao
+                hospedagem.limparHospedes()
+                validacao.hospedes.forEach(cliente => hospedagem.adicionarHospede(cliente))
+
+                responderJSON(resposta, 200, hospedagemParaDTO(hospedagem, id - 1))
+                return
+            } catch {
+                responderJSON(resposta, 400, { mensagem: "Nao foi possivel processar o corpo da requisicao." })
+                return
+            }
+        }
+
+        if (metodo === "DELETE") {
+            const removido = armazem.removerHospedagem(id)
+            if (!removido) {
+                responderJSON(resposta, 400, { mensagem: "Nao foi possivel remover a hospedagem." })
+                return
+            }
+
+            responderSemConteudo(resposta, 204)
             return
         }
     }

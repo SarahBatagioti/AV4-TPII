@@ -44,3 +44,16 @@ export function cadastrarHospedagem(payload: HospedagemPayload): Promise<Hospeda
     body: JSON.stringify(payload),
   })
 }
+
+export function salvarHospedagem(id: number | null, payload: HospedagemPayload): Promise<HospedagemDTO> {
+  return requestJSON<HospedagemDTO>(id ? `/hospedagens/${id}` : '/hospedagens', {
+    method: id ? 'PUT' : 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function excluirHospedagem(id: number): Promise<void> {
+  return requestJSON<void>(`/hospedagens/${id}`, {
+    method: 'DELETE',
+  })
+}

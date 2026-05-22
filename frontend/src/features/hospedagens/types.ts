@@ -41,3 +41,11 @@ export function formularioParaPayload(formulario: HospedagemFormValues): Hospeda
     hospedesIds: formulario.hospedesIds.map((id) => Number(id)),
   }
 }
+
+export function hospedagemParaFormulario(hospedagem: HospedagemDTO): HospedagemFormValues {
+  return {
+    acomodacaoId: String(hospedagem.acomodacao.id),
+    hospedesIds: hospedagem.hospedes.map((hospede) => String(hospede.id)),
+    clienteSelecionadoId: '',
+  }
+}
