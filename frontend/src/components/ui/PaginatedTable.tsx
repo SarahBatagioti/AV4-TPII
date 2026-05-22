@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import noDataIllustration from '../../assets/undraw-no-data.svg'
 
 type ColumnDefinition<T> = {
   header: string
@@ -43,6 +44,7 @@ export function PaginatedTable<T>({
       <div className="table-shell">
         {items.length === 0 ? (
           <div className="empty-state">
+            <img className="empty-state__image" src={noDataIllustration} alt="" aria-hidden="true" />
             <h3>{emptyTitle}</h3>
             <p>{emptyDescription}</p>
           </div>

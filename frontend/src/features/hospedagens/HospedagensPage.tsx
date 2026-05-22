@@ -9,7 +9,7 @@ import { HospedagemFormModal } from './HospedagemFormModal'
 const PAGE_SIZE = 5
 
 function formatarClimatizacao(valor: boolean): string {
-  return valor ? 'Sim' : 'Nao'
+  return valor ? 'Sim' : 'Não'
 }
 
 function renderHospedes(hospedagem: HospedagemDTO): string {
@@ -149,9 +149,8 @@ export function HospedagensPage() {
           page={pagina}
           pageSize={PAGE_SIZE}
           onPageChange={setPagina}
-          renderActions={() => <span className="cell-muted">—</span>}
-          emptyTitle="Nenhuma hospedagem ativa"
-          emptyDescription="Use o botão Cadastrar Hospedagem para registrar a primeira hospedagem ativa."
+          emptyTitle="Nenhuma hospedagem cadastrada"
+          emptyDescription="Use o botão Cadastrar Hospedagem para registrar a primeira hospedagem no sistema."
           itemLabel="hospedagens"
         />
       ) : null}

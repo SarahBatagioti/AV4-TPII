@@ -129,7 +129,7 @@ export function AcomodacoesPage() {
           pageSize={PAGE_SIZE}
           onPageChange={setPagina}
           emptyTitle="Nenhuma acomodação cadastrada"
-          emptyDescription="Use o botão Cadastrar Acomodação para incluir a primeira opção no painel."
+          emptyDescription="Use o botão Cadastrar Acomodação para incluir a primeira opção disponível no sistema."
           itemLabel="acomodações"
         />
       ) : null}

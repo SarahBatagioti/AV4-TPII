@@ -60,9 +60,9 @@
 }
 
 .nav-button:hover {
-  background-color: #8fbdd3;
-  color: #215e81;
-  border-color: rgba(43, 124, 168, 0.4);
+  background: linear-gradient(135deg, #54a4ca 0%, #34789d 100%);
+  color: #ffffff;
+  border-color: transparent;
   box-shadow: 0 10px 22px rgba(43, 124, 168, 0.22);
   transform: translateY(-1px);
 }
@@ -191,6 +191,11 @@
   box-shadow: 0 14px 24px rgba(43, 124, 168, 0.28);
 }
 
+.clientes-action-button:hover {
+  background: linear-gradient(135deg, #54a4ca 0%, #34789d 100%);
+  color: #ffffff;
+}
+
 .primary-button {
   display: inline-flex;
   align-items: center;
@@ -208,6 +213,7 @@
 }
 
 .primary-button:hover {
+  background: linear-gradient(135deg, #54a4ca 0%, #34789d 100%);
   transform: translateY(-1px);
   box-shadow: 0 18px 34px rgba(43, 124, 168, 0.28);
 }
@@ -237,6 +243,7 @@
 }
 
 .secondary-button:hover {
+  background: rgba(230, 241, 247, 0.98);
   transform: translateY(-1px);
   border-color: rgba(43, 124, 168, 0.35);
   box-shadow: 0 10px 24px rgba(43, 124, 168, 0.12);
@@ -385,7 +392,7 @@
 
 .icon-button:hover {
   transform: translateY(-1px);
-  background: rgba(43, 124, 168, 0.08);
+  background: rgba(186, 220, 234, 0.5);
   box-shadow: 0 10px 22px rgba(43, 124, 168, 0.12);
 }
 
@@ -394,11 +401,20 @@
 }
 
 .empty-state {
-  padding: 36px 22px 28px;
+  min-height: 420px;
+  padding: 40px 22px 36px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.empty-state__image {
+  width: min(240px, 100%);
+  height: auto;
+  object-fit: contain;
 }
 
 .empty-state h2,
@@ -409,6 +425,7 @@
 
 .empty-state p {
   margin: 0;
+  max-width: 32rem;
   color: #637381;
 }
 
@@ -447,7 +464,7 @@
 
 .pagination-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: rgba(43, 124, 168, 0.08);
+  background: rgba(186, 220, 234, 0.5);
   box-shadow: 0 10px 20px rgba(43, 124, 168, 0.1);
 }
 
@@ -661,7 +678,7 @@
 }
 
 .modal-close-button:hover {
-  background: rgba(43, 124, 168, 0.08);
+  background: rgba(186, 220, 234, 0.5);
 }
 
 .confirm-content {
