@@ -7,19 +7,19 @@ export default class CadastrarHospedagem extends Processo {
 
         const acomodacoes = this.armazem.obterAcomodacoes()
         if (acomodacoes.length === 0) {
-            console.log('Nenhuma acomodacao cadastrada.')
+            console.log('Nenhuma acomodação cadastrada.')
             return
         }
 
-        console.log('Acomodacoes disponiveis:')
+        console.log('Acomodações disponíveis:')
         acomodacoes.forEach((acomodacao, indice) => {
             console.log(`${indice + 1} - ${acomodacao.NomeAcomodacao}`)
         })
 
-        const indiceAcomodacao = this.entrada.receberNumero('Escolha o numero da acomodacao')
+        const indiceAcomodacao = this.entrada.receberNumero('Escolha o número da acomodação')
         const acomodacao = acomodacoes[indiceAcomodacao - 1]
         if (!acomodacao) {
-            console.log('Acomodacao invalida.')
+            console.log('Acomodação inválida.')
             return
         }
 
@@ -29,35 +29,43 @@ export default class CadastrarHospedagem extends Processo {
             return
         }
 
+        const dataInicio = this.entrada.receberData('Informe a data de início da hospedagem')
+        const dataFim = this.entrada.receberData('Informe a data de fim da hospedagem')
+
+        if (dataFim <= dataInicio) {
+            console.log('A data fim deve ser posterior à data de início.')
+            return
+        }
+
         console.log('Clientes cadastrados:')
         clientes.forEach(cliente => {
             const situacao = this.armazem.clienteEstaHospedado(cliente.id) ? ' - hospedado' : ''
             console.log(`ID ${cliente.id} - ${cliente.nome}${situacao}`)
         })
 
-        const hospedagem = new Hospedagem(acomodacao)
+        const hospedagem = new Hospedagem(acomodacao, dataInicio, dataFim)
         let adicionandoHospedes = true
 
         while (adicionandoHospedes) {
-            const clienteId = this.entrada.receberNumero('Informe o ID do hospede')
+            const clienteId = this.entrada.receberNumero('Informe o ID do hóspede')
             const cliente = this.armazem.buscarClientePorId(clienteId)
 
             if (!cliente) {
-                console.log('Cliente nao encontrado.')
+                console.log('Cliente não encontrado.')
             } else if (this.armazem.clienteEstaHospedado(cliente.id)) {
-                console.log('Este cliente ja esta vinculado a uma hospedagem ativa.')
+                console.log('Este cliente já está vinculado a uma hospedagem ativa.')
             } else if (hospedagem.contemHospede(cliente.id)) {
-                console.log('Este cliente ja foi adicionado nesta hospedagem.')
+                console.log('Este cliente já foi adicionado nesta hospedagem.')
             } else {
                 hospedagem.adicionarHospede(cliente)
-                console.log(`Hospede ${cliente.nome} vinculado com sucesso.`)
+                console.log(`Hóspede ${cliente.nome} vinculado com sucesso.`)
             }
 
-            adicionandoHospedes = this.entrada.receberConfirmacao('Deseja adicionar outro hospede? (s/n)')
+            adicionandoHospedes = this.entrada.receberConfirmacao('Deseja adicionar outro hóspede? (s/n)')
         }
 
         if (hospedagem.Hospedes.length === 0) {
-            console.log('Hospedagem cancelada. Nenhum hospede valido foi informado.')
+            console.log('Hospedagem cancelada. Nenhum hóspede válido foi informado.')
             return
         }
 

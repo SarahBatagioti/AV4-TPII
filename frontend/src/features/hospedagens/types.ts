@@ -14,17 +14,23 @@ export type HospedagemDTO = {
   id: number
   acomodacao: AcomodacaoDTO
   hospedes: ClienteDTO[]
+  dataInicio: string
+  dataFim: string
 }
 
 export type HospedagemFormValues = {
   acomodacaoId: string
   hospedesIds: string[]
   clienteSelecionadoId: string
+  dataInicio: string
+  dataFim: string
 }
 
 export type HospedagemPayload = {
   acomodacaoId: number
   hospedesIds: number[]
+  dataInicio: string
+  dataFim: string
 }
 
 export function criarFormularioVazio(): HospedagemFormValues {
@@ -32,6 +38,8 @@ export function criarFormularioVazio(): HospedagemFormValues {
     acomodacaoId: '',
     hospedesIds: [],
     clienteSelecionadoId: '',
+    dataInicio: '',
+    dataFim: '',
   }
 }
 
@@ -39,6 +47,8 @@ export function formularioParaPayload(formulario: HospedagemFormValues): Hospeda
   return {
     acomodacaoId: Number(formulario.acomodacaoId),
     hospedesIds: formulario.hospedesIds.map((id) => Number(id)),
+    dataInicio: formulario.dataInicio,
+    dataFim: formulario.dataFim,
   }
 }
 
@@ -47,5 +57,7 @@ export function hospedagemParaFormulario(hospedagem: HospedagemDTO): HospedagemF
     acomodacaoId: String(hospedagem.acomodacao.id),
     hospedesIds: hospedagem.hospedes.map((hospede) => String(hospede.id)),
     clienteSelecionadoId: '',
+    dataInicio: hospedagem.dataInicio.slice(0, 10),
+    dataFim: hospedagem.dataFim.slice(0, 10),
   }
 }

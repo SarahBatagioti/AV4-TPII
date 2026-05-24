@@ -19,12 +19,12 @@ function normalizarBusca(valor: string): string {
 }
 
 function formatarClimatizacao(valor: boolean): string {
-  return valor ? 'Sim' : 'Nao'
+  return valor ? 'Sim' : 'Não'
 }
 
 function renderHospedes(hospedagem: HospedagemDTO): string {
   if (hospedagem.hospedes.length === 0) {
-    return 'Nenhum hospede'
+    return 'Nenhum hóspede'
   }
 
   const nomes = hospedagem.hospedes.map((hospede) => hospede.nome)
@@ -35,9 +35,17 @@ function formatarAcomodacao(acomodacao: AcomodacaoDTO): string {
   return [
     `${acomodacao.camaSolteiro} solteiro(s)`,
     `${acomodacao.camaCasal} casal(is)`,
-    `${acomodacao.suite} suite(s)`,
+    `${acomodacao.suite} suíte(s)`,
     `${acomodacao.garagem} vaga(s)`,
   ].join(' - ')
+}
+
+function formatarData(dataISO: string): string {
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(dataISO))
 }
 
 function EditIcon() {
@@ -106,7 +114,7 @@ export function HospedagensPage() {
       setAcomodacoes(acomodacoesDados)
       setClientes(clientesDados)
     } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Nao foi possivel carregar as hospedagens.')
+      setErro(error instanceof Error ? error.message : 'Não foi possível carregar as hospedagens.')
     } finally {
       setCarregando(false)
     }
@@ -193,7 +201,7 @@ export function HospedagensPage() {
       setHospedagemParaExcluir(null)
       await carregarDados()
     } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Nao foi possivel excluir a hospedagem.')
+      setErro(error instanceof Error ? error.message : 'Não foi possível excluir a hospedagem.')
     } finally {
       setExcluindo(false)
     }
@@ -205,7 +213,7 @@ export function HospedagensPage() {
       render: (hospedagem: HospedagemDTO) => <strong>{hospedagem.id}</strong>,
     },
     {
-      header: 'Acomodacao',
+      header: 'Acomodação',
       render: (hospedagem: HospedagemDTO) => (
         <div className="cell-stack">
           <strong>{formatarNomeAcomodacao(hospedagem.acomodacao.nome)}</strong>
@@ -214,11 +222,20 @@ export function HospedagensPage() {
       ),
     },
     {
-      header: 'Hospedes',
+      header: 'Hóspedes',
       render: (hospedagem: HospedagemDTO) => (
         <div className="cell-stack">
           <strong>{renderHospedes(hospedagem)}</strong>
-          <span className="cell-muted">{hospedagem.hospedes.length} hospede(s) vinculado(s)</span>
+          <span className="cell-muted">{hospedagem.hospedes.length} hóspede(s) vinculado(s)</span>
+        </div>
+      ),
+    },
+    {
+      header: 'Estadia',
+      render: (hospedagem: HospedagemDTO) => (
+        <div className="cell-stack">
+          <strong>{formatarData(hospedagem.dataInicio)}</strong>
+          <span className="cell-muted">até {formatarData(hospedagem.dataFim)}</span>
         </div>
       ),
     },
@@ -226,7 +243,7 @@ export function HospedagensPage() {
       header: 'Detalhes',
       render: (hospedagem: HospedagemDTO) => (
         <div className="cell-stack">
-          <span className="tag">Climatizacao: {formatarClimatizacao(hospedagem.acomodacao.climatizacao)}</span>
+          <span className="tag">Climatização: {formatarClimatizacao(hospedagem.acomodacao.climatizacao)}</span>
           <span className="cell-muted">Garagem: {hospedagem.acomodacao.garagem}</span>
         </div>
       ),
@@ -237,16 +254,16 @@ export function HospedagensPage() {
   const emptyTitle = haFiltrosAtivos ? 'Nenhuma hospedagem encontrada' : 'Nenhuma hospedagem cadastrada'
   const emptyDescription = haFiltrosAtivos
     ? 'Ajuste os filtros para visualizar outras hospedagens cadastradas.'
-    : 'Use o botao Cadastrar Hospedagem para registrar a primeira hospedagem no sistema.'
+    : 'Use o botão Cadastrar Hospedagem para registrar a primeira hospedagem no sistema.'
 
   return (
     <section className="clientes-page hospedagem-page">
       <div className="page-header">
         <div className="page-title-block">
           <span className="page-kicker">Hospedagem</span>
-          <h1 className="page-title">Gestao de Hospedagens</h1>
+          <h1 className="page-title">Gestão de Hospedagens</h1>
           <p className="page-subtitle">
-            Acompanhe as hospedagens ativas e cadastre, edite ou exclua reservas usando as acomodacoes e clientes ja cadastrados.
+            Acompanhe as hospedagens ativas e cadastre, edite ou exclua reservas usando as acomodações e clientes já cadastrados.
           </p>
         </div>
 
@@ -265,7 +282,7 @@ export function HospedagensPage() {
           <div className="filters-card">
             <div className="filters-bar">
               <div className="form-field filter-field filter-field--search">
-                <label htmlFor="hospedagens-busca">Buscar por nome de hospede</label>
+                <label htmlFor="hospedagens-busca">Buscar por nome de hóspede</label>
                 <input
                   id="hospedagens-busca"
                   value={buscaHospede}
@@ -275,7 +292,7 @@ export function HospedagensPage() {
               </div>
 
               <div className="form-field filter-field filter-field--md">
-                <label htmlFor="hospedagens-acomodacao">Acomodacao</label>
+                <label htmlFor="hospedagens-acomodacao">Acomodação</label>
                 <select id="hospedagens-acomodacao" value={acomodacaoFiltro} onChange={(event) => setAcomodacaoFiltro(event.target.value)}>
                   <option value="todas">Todas</option>
                   {acomodacoes.map((acomodacao) => (
@@ -329,7 +346,7 @@ export function HospedagensPage() {
         title="Excluir hospedagem"
         message={
           hospedagemParaExcluir
-            ? `Tem certeza que deseja excluir a hospedagem da acomodacao ${formatarNomeAcomodacao(hospedagemParaExcluir.acomodacao.nome)}?`
+            ? `Tem certeza que deseja excluir a hospedagem da acomodação ${formatarNomeAcomodacao(hospedagemParaExcluir.acomodacao.nome)}?`
             : 'Tem certeza que deseja excluir esta hospedagem?'
         }
         confirmLabel={excluindo ? 'Excluindo...' : 'Excluir'}

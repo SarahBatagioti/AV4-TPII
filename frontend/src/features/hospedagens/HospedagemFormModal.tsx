@@ -42,8 +42,8 @@ function formatarAcomodacao(acomodacao: AcomodacaoDTO): string {
     `${formatarNomeAcomodacao(acomodacao.nome)}`,
     `${acomodacao.camaSolteiro} solteiro(s)`,
     `${acomodacao.camaCasal} casal(is)`,
-    `${acomodacao.suite} suite(s)`,
-    acomodacao.climatizacao ? 'Climatizacao' : 'Sem climatizacao',
+    `${acomodacao.suite} suíte(s)`,
+    acomodacao.climatizacao ? 'Climatização' : 'Sem climatização',
     `${acomodacao.garagem} vaga(s)`,
   ].join(' - ')
 }
@@ -75,8 +75,8 @@ export function HospedagemFormModal({ open, initialHospedagem, acomodacoes, clie
   const descricao = useMemo(
     () => (
       ehEdicao
-        ? 'Atualize a acomodacao e a lista de hospedes vinculados a esta hospedagem ativa.'
-        : 'Escolha a acomodacao, adicione os hospedes disponiveis e salve a nova hospedagem.'
+        ? 'Atualize a acomodação, o período da estadia e a lista de hóspedes vinculados a esta hospedagem ativa.'
+        : 'Escolha a acomodação, selecione o período da estadia, adicione os hóspedes disponíveis e salve a nova hospedagem.'
     ),
     [ehEdicao],
   )
@@ -115,7 +115,17 @@ export function HospedagemFormModal({ open, initialHospedagem, acomodacoes, clie
     setErro(null)
 
     if (formulario.hospedesIds.length === 0) {
-      setErro('Adicione ao menos um hospede para salvar a hospedagem.')
+      setErro('Adicione ao menos um hóspede para salvar a hospedagem.')
+      return
+    }
+
+    if (!formulario.dataInicio || !formulario.dataFim) {
+      setErro('Informe a data de início e a data de fim da hospedagem.')
+      return
+    }
+
+    if (formulario.dataFim <= formulario.dataInicio) {
+      setErro('A data fim deve ser posterior à data de início.')
       return
     }
 
@@ -125,7 +135,7 @@ export function HospedagemFormModal({ open, initialHospedagem, acomodacoes, clie
       await onSubmit(initialHospedagem?.id ?? null, formularioParaPayload(formulario))
       onClose()
     } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Nao foi possivel salvar a hospedagem.')
+      setErro(error instanceof Error ? error.message : 'Não foi possível salvar a hospedagem.')
     } finally {
       setEnviando(false)
     }
@@ -152,9 +162,9 @@ export function HospedagemFormModal({ open, initialHospedagem, acomodacoes, clie
     >
       <form id="hospedagem-form" onSubmit={handleSubmit}>
         <div className="form-grid">
-          <Field label="Acomodacao" span={6}>
+          <Field label="Acomodação" span={6}>
             <select value={formulario.acomodacaoId} onChange={(event) => atualizarCampo('acomodacaoId', event.target.value)} required>
-              <option value="">Selecione uma acomodacao</option>
+              <option value="">Selecione uma acomodação</option>
               {acomodacoes.map((acomodacao) => (
                 <option key={acomodacao.id} value={acomodacao.id}>
                   {formatarAcomodacao(acomodacao)}
@@ -163,13 +173,33 @@ export function HospedagemFormModal({ open, initialHospedagem, acomodacoes, clie
             </select>
           </Field>
 
-          <Field label="Cliente disponivel" span={6}>
+          <Field label="Data de início" span={3}>
+            <input
+              type="date"
+              value={formulario.dataInicio}
+              max={formulario.dataFim || undefined}
+              onChange={(event) => atualizarCampo('dataInicio', event.target.value)}
+              required
+            />
+          </Field>
+
+          <Field label="Data de fim" span={3}>
+            <input
+              type="date"
+              value={formulario.dataFim}
+              min={formulario.dataInicio || undefined}
+              onChange={(event) => atualizarCampo('dataFim', event.target.value)}
+              required
+            />
+          </Field>
+
+          <Field label="Cliente disponível" span={6}>
             <select
               value={formulario.clienteSelecionadoId}
               onChange={(event) => atualizarCampo('clienteSelecionadoId', event.target.value)}
               disabled={clientesSelecionaveis.length === 0}
             >
-              <option value="">{clientesSelecionaveis.length === 0 ? 'Nenhum cliente disponivel' : 'Selecione um cliente'}</option>
+              <option value="">{clientesSelecionaveis.length === 0 ? 'Nenhum cliente disponível' : 'Selecione um cliente'}</option>
               {clientesSelecionaveis.map((cliente) => (
                 <option key={cliente.id} value={cliente.id}>
                   {cliente.nome} - ID {cliente.id}
@@ -178,13 +208,13 @@ export function HospedagemFormModal({ open, initialHospedagem, acomodacoes, clie
             </select>
           </Field>
 
-          <Field label="Adicionar hospede" span={6}>
+          <Field label="Adicionar hóspede" span={6}>
             <button type="button" className="secondary-button" onClick={adicionarHospede} disabled={!formulario.clienteSelecionadoId || clientesSelecionaveis.length === 0}>
-              Adicionar hospede
+              Adicionar hóspede
             </button>
           </Field>
 
-          <Field label="Hospedes da hospedagem" span={12}>
+          <Field label="Hóspedes da hospedagem" span={12}>
             {clientesSelecionados.length > 0 ? (
               <div className="selection-list">
                 {clientesSelecionados.map((cliente) => (
@@ -201,14 +231,17 @@ export function HospedagemFormModal({ open, initialHospedagem, acomodacoes, clie
                 ))}
               </div>
             ) : (
-              <p className="form-helper">Adicione os hospedes antes de salvar a hospedagem.</p>
+              <p className="form-helper">Adicione os hóspedes antes de salvar a hospedagem.</p>
             )}
           </Field>
         </div>
 
         {erro ? <div className="alert-box">{erro}</div> : null}
-        {acomodacoes.length === 0 ? <div className="alert-box">Nao existe acomodacao cadastrada para iniciar uma hospedagem.</div> : null}
-        {clientesSelecionaveis.length === 0 ? <div className="alert-box">Nao existe cliente disponivel para hospedagem no momento.</div> : null}
+        {acomodacoes.length === 0 ? <div className="alert-box">Não existe acomodação cadastrada para iniciar uma hospedagem.</div> : null}
+        {clientesSelecionaveis.length === 0 ? <div className="alert-box">Não existe cliente disponível para hospedagem no momento.</div> : null}
+        {formulario.dataInicio && formulario.dataFim && formulario.dataFim <= formulario.dataInicio ? (
+          <div className="alert-box">A data fim precisa ser posterior à data de início.</div>
+        ) : null}
       </form>
     </Modal>
   )

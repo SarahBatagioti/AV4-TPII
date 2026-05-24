@@ -13,8 +13,8 @@ export default class ImpressorHospedagem {
             .join(', ')
 
         return [
-            `Tipo de acomodacao: ${this.hospedagem.Acomodacao.NomeAcomodacao}`,
-            `Hospedes: ${hospedes || 'Nenhum hospede vinculado'}`
+            `Tipo de acomodação: ${this.hospedagem.Acomodacao.NomeAcomodacao}`,
+            `Hóspedes: ${hospedes || 'Nenhum hóspede vinculado'}`
         ].join('\n')
     }
 }

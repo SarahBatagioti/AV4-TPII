@@ -90,11 +90,15 @@ type HospedagemDTO = {
     id: number
     acomodacao: AcomodacaoDTO
     hospedes: ClienteDTO[]
+    dataInicio: string
+    dataFim: string
 }
 
 type HospedagemPayload = {
     acomodacaoId: number
     hospedesIds: number[]
+    dataInicio: string
+    dataFim: string
 }
 
 function adicionarCabecalhosCors(resposta: ServerResponse): void {
@@ -217,7 +221,9 @@ function hospedagemParaDTO(hospedagem: Hospedagem, indice: number): HospedagemDT
     return {
         id: indice + 1,
         acomodacao: acomodacaoParaDTO(hospedagem.Acomodacao, acomodacaoIndice >= 0 ? acomodacaoIndice : 0),
-        hospedes: hospedagem.Hospedes.map(clienteParaDTO)
+        hospedes: hospedagem.Hospedes.map(clienteParaDTO),
+        dataInicio: hospedagem.DataInicio.toISOString(),
+        dataFim: hospedagem.DataFim.toISOString()
     }
 }
 
@@ -225,20 +231,38 @@ function hospedagemPayloadValido(payload: HospedagemPayload): boolean {
     return Number.isInteger(payload.acomodacaoId) && Array.isArray(payload.hospedesIds) && payload.hospedesIds.length > 0
         && payload.hospedesIds.every((id) => Number.isInteger(id))
         && new Set(payload.hospedesIds).size === payload.hospedesIds.length
+        && typeof payload.dataInicio === "string"
+        && typeof payload.dataFim === "string"
+}
+
+function converterTextoParaData(dataTexto: string): Date | undefined {
+    const data = new Date(dataTexto)
+    return Number.isNaN(data.getTime()) ? undefined : data
 }
 
 function validarHospedagem(
     armazem: Armazem,
     payload: HospedagemPayload,
     hospedagemAtual?: Hospedagem
-): { acomodacao?: Acomodacao; hospedes?: Cliente[]; erro?: string } {
+): { acomodacao?: Acomodacao; hospedes?: Cliente[]; dataInicio?: Date; dataFim?: Date; erro?: string } {
     if (!hospedagemPayloadValido(payload)) {
-        return { erro: "Informe ao menos um hospede valido para a hospedagem." }
+        return { erro: "Informe ao menos um hóspede válido para a hospedagem." }
+    }
+
+    const dataInicio = converterTextoParaData(payload.dataInicio)
+    const dataFim = converterTextoParaData(payload.dataFim)
+
+    if (!dataInicio || !dataFim) {
+        return { erro: "Informe datas válidas para a hospedagem." }
+    }
+
+    if (dataFim <= dataInicio) {
+        return { erro: "A data fim deve ser posterior à data de início." }
     }
 
     const acomodacao = armazem.buscarAcomodacaoPorId(payload.acomodacaoId)
     if (!acomodacao) {
-        return { erro: "Acomodacao invalida." }
+        return { erro: "Acomodação inválida." }
     }
 
     const acomodacaoEmUso = hospedagemAtual
@@ -246,7 +270,7 @@ function validarHospedagem(
         : armazem.acomodacaoEstaEmUso(acomodacao)
 
     if (acomodacaoEmUso) {
-        return { erro: "A acomodacao informada ja esta vinculada a outra hospedagem ativa." }
+        return { erro: "A acomodação informada já está vinculada a outra hospedagem ativa." }
     }
 
     const hospedes: Cliente[] = []
@@ -255,7 +279,7 @@ function validarHospedagem(
         const cliente = armazem.buscarClientePorId(clienteId)
 
         if (!cliente) {
-            return { erro: `Cliente ${clienteId} nao encontrado.` }
+            return { erro: `Cliente ${clienteId} não encontrado.` }
         }
 
         const clienteJaHospedado = hospedagemAtual
@@ -263,13 +287,13 @@ function validarHospedagem(
             : armazem.clienteEstaHospedado(cliente.id)
 
         if (clienteJaHospedado) {
-            return { erro: `O cliente ${cliente.nome} ja esta vinculado a uma hospedagem ativa.` }
+            return { erro: `O cliente ${cliente.nome} já está vinculado a uma hospedagem ativa.` }
         }
 
         hospedes.push(cliente)
     }
 
-    return { acomodacao, hospedes }
+    return { acomodacao, hospedes, dataInicio, dataFim }
 }
 
 function converterPayloadParaEndereco(payload: ClientePayload): Endereco {
@@ -324,7 +348,7 @@ function vincularDependente(cliente: Cliente, payload: ClientePayload): string |
 
     const titular = armazem.buscarClientePorId(titularId)
     if (!titular || titular.ehDependente || titular.id === cliente.id) {
-        return "Titular informado nao encontrado."
+        return "Titular informado não encontrado."
     }
 
     desvincularDeTitularAtual(cliente)
@@ -417,7 +441,7 @@ async function processarRequisicao(requisicao: IncomingMessage, resposta: Server
             responderJSON(resposta, 201, acomodacaoParaDTO(acomodacao, armazem.obterAcomodacoes().length - 1))
             return
         } catch {
-            responderJSON(resposta, 400, { mensagem: "Nao foi possivel processar o corpo da requisicao." })
+            responderJSON(resposta, 400, { mensagem: "Não foi possível processar o corpo da requisição." })
             return
         }
     }
@@ -442,7 +466,7 @@ async function processarRequisicao(requisicao: IncomingMessage, resposta: Server
                 const payload = await lerCorpoJSON<AcomodacaoPayload>(requisicao)
 
                 if (!acomodacaoPayloadValido(payload) || !nomeAcomodacaoEhValido(payload.nome)) {
-                    responderJSON(resposta, 400, { mensagem: "Informe dados validos para a acomodacao." })
+                    responderJSON(resposta, 400, { mensagem: "Informe dados válidos para a acomodação." })
                     return
                 }
 
@@ -486,7 +510,7 @@ async function processarRequisicao(requisicao: IncomingMessage, resposta: Server
             const payload = await lerCorpoJSON<ClientePayload>(requisicao)
             const resultado = criarCliente(payload)
             if (resultado.erro || !resultado.cliente) {
-                responderJSON(resposta, 400, { mensagem: resultado.erro ?? "Dados invalidos." })
+                responderJSON(resposta, 400, { mensagem: resultado.erro ?? "Dados inválidos." })
                 return
             }
 
@@ -510,7 +534,7 @@ async function processarRequisicao(requisicao: IncomingMessage, resposta: Server
         const cliente = armazem.buscarClientePorId(id)
 
         if (!cliente) {
-            responderJSON(resposta, 404, { mensagem: "Cliente nao encontrado." })
+            responderJSON(resposta, 404, { mensagem: "Cliente não encontrado." })
             return
         }
 
@@ -550,12 +574,12 @@ async function processarRequisicao(requisicao: IncomingMessage, resposta: Server
             const payload = await lerCorpoJSON<HospedagemPayload>(requisicao)
             const armazem = Armazem.obterInstancia()
             const validacao = validarHospedagem(armazem, payload)
-            if (validacao.erro || !validacao.acomodacao || !validacao.hospedes) {
+            if (validacao.erro || !validacao.acomodacao || !validacao.hospedes || !validacao.dataInicio || !validacao.dataFim) {
                 responderJSON(resposta, 400, { mensagem: validacao.erro ?? "Nao foi possivel validar a hospedagem." })
                 return
             }
 
-            const hospedagem = new Hospedagem(validacao.acomodacao)
+            const hospedagem = new Hospedagem(validacao.acomodacao, validacao.dataInicio, validacao.dataFim)
             validacao.hospedes.forEach(cliente => hospedagem.adicionarHospede(cliente))
 
             armazem.cadastrarHospedagem(hospedagem)
@@ -587,12 +611,14 @@ async function processarRequisicao(requisicao: IncomingMessage, resposta: Server
                 const payload = await lerCorpoJSON<HospedagemPayload>(requisicao)
                 const validacao = validarHospedagem(armazem, payload, hospedagem)
 
-                if (validacao.erro || !validacao.acomodacao || !validacao.hospedes) {
+                if (validacao.erro || !validacao.acomodacao || !validacao.hospedes || !validacao.dataInicio || !validacao.dataFim) {
                     responderJSON(resposta, 400, { mensagem: validacao.erro ?? "Nao foi possivel validar a hospedagem." })
                     return
                 }
 
                 hospedagem.Acomodacao = validacao.acomodacao
+                hospedagem.DataInicio = validacao.dataInicio
+                hospedagem.DataFim = validacao.dataFim
                 hospedagem.limparHospedes()
                 validacao.hospedes.forEach(cliente => hospedagem.adicionarHospede(cliente))
 

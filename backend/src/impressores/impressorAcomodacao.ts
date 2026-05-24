@@ -9,11 +9,11 @@ export default class ImpressorAcomodacao {
 
     public imprimir(): string {
         return [
-            `Tipo de acomodacao: ${this.acomodacao.NomeAcomodacao}`,
+            `Tipo de acomodação: ${this.acomodacao.NomeAcomodacao}`,
             `- Camas de solteiro: ${this.acomodacao.CamaSolteiro}`,
             `- Camas de casal: ${this.acomodacao.CamaCasal}`,
-            `- Suites: ${this.acomodacao.Suite}`,
-            `- Climatizacao: ${this.acomodacao.Climatizacao ? 'Sim' : 'Nao'}`,
+            `- Suítes: ${this.acomodacao.Suite}`,
+            `- Climatização: ${this.acomodacao.Climatizacao ? 'Sim' : 'Não'}`,
             `- Garagens: ${this.acomodacao.Garagem}`
         ].join('\n')
     }
