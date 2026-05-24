@@ -73,12 +73,21 @@ export function HospedagemFormModal({ open, initialHospedagem, acomodacoes, clie
   const ehEdicao = Boolean(initialHospedagem)
   const titulo = useMemo(() => (ehEdicao ? 'Editar Hospedagem' : 'Cadastrar Hospedagem'), [ehEdicao])
   const descricao = useMemo(
-    () => (
+    () =>
       ehEdicao
         ? 'Atualize a acomodação, o período da estadia e a lista de hóspedes vinculados a esta hospedagem ativa.'
-        : 'Escolha a acomodação, selecione o período da estadia, adicione os hóspedes disponíveis e salve a nova hospedagem.'
-    ),
+        : 'Escolha a acomodação, selecione o período da estadia, adicione os hóspedes disponíveis e salve a nova hospedagem.',
     [ehEdicao],
+  )
+
+  const clientesDisponiveisNoFormulario = useMemo(
+    () => clientesSelecionaveis.filter((cliente) => !formulario.hospedesIds.includes(String(cliente.id))),
+    [clientesSelecionaveis, formulario.hospedesIds],
+  )
+
+  const clientesSelecionados = useMemo(
+    () => clientesSelecionaveis.filter((cliente) => formulario.hospedesIds.includes(String(cliente.id))),
+    [clientesSelecionaveis, formulario.hospedesIds],
   )
 
   function atualizarCampo<K extends keyof HospedagemFormValues>(campo: K, valor: HospedagemFormValues[K]) {
@@ -141,8 +150,6 @@ export function HospedagemFormModal({ open, initialHospedagem, acomodacoes, clie
     }
   }
 
-  const clientesSelecionados = clientesSelecionaveis.filter((cliente) => formulario.hospedesIds.includes(String(cliente.id)))
-
   return (
     <Modal
       open={open}
@@ -197,10 +204,10 @@ export function HospedagemFormModal({ open, initialHospedagem, acomodacoes, clie
             <select
               value={formulario.clienteSelecionadoId}
               onChange={(event) => atualizarCampo('clienteSelecionadoId', event.target.value)}
-              disabled={clientesSelecionaveis.length === 0}
+              disabled={clientesDisponiveisNoFormulario.length === 0}
             >
-              <option value="">{clientesSelecionaveis.length === 0 ? 'Nenhum cliente disponível' : 'Selecione um cliente'}</option>
-              {clientesSelecionaveis.map((cliente) => (
+              <option value="">{clientesDisponiveisNoFormulario.length === 0 ? 'Nenhum cliente disponível' : 'Selecione um cliente'}</option>
+              {clientesDisponiveisNoFormulario.map((cliente) => (
                 <option key={cliente.id} value={cliente.id}>
                   {cliente.nome} - ID {cliente.id}
                 </option>
@@ -209,7 +216,12 @@ export function HospedagemFormModal({ open, initialHospedagem, acomodacoes, clie
           </Field>
 
           <Field label="Adicionar hóspede" span={6}>
-            <button type="button" className="secondary-button" onClick={adicionarHospede} disabled={!formulario.clienteSelecionadoId || clientesSelecionaveis.length === 0}>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={adicionarHospede}
+              disabled={!formulario.clienteSelecionadoId || clientesDisponiveisNoFormulario.length === 0}
+            >
               Adicionar hóspede
             </button>
           </Field>
@@ -238,7 +250,7 @@ export function HospedagemFormModal({ open, initialHospedagem, acomodacoes, clie
 
         {erro ? <div className="alert-box">{erro}</div> : null}
         {acomodacoes.length === 0 ? <div className="alert-box">Não existe acomodação cadastrada para iniciar uma hospedagem.</div> : null}
-        {clientesSelecionaveis.length === 0 ? <div className="alert-box">Não existe cliente disponível para hospedagem no momento.</div> : null}
+        {clientesDisponiveisNoFormulario.length === 0 ? <div className="alert-box">Não existe cliente disponível para hospedagem no momento.</div> : null}
         {formulario.dataInicio && formulario.dataFim && formulario.dataFim <= formulario.dataInicio ? (
           <div className="alert-box">A data fim precisa ser posterior à data de início.</div>
         ) : null}
